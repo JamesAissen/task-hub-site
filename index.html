@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Morning Brief</title>
+<title>Daily Brief</title>
 <style>
   :root{
     --bg:#070b12; --panel:#0e1622; --panel2:#111d2e; --line:#1d2c40;
@@ -29,6 +29,7 @@
   .brand{font-size:13px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
   h1{margin:6px 0 2px;font-size:30px;font-weight:600;letter-spacing:.5px;}
   .sub{color:var(--muted);font-size:14px;}
+  .greet-note{color:#5f7189;font-size:12px;font-style:italic;margin:0 0 3px;letter-spacing:.3px;}
   .clock{text-align:right;}
   .clock .time{font-size:34px;font-weight:600;color:var(--cyan);text-shadow:var(--glow);font-variant-numeric:tabular-nums;}
   .clock .zone{color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;}
@@ -134,8 +135,9 @@
 <div class="wrap">
   <header>
     <div>
-      <div class="brand">Morning Brief</div>
-      <h1>Good morning, James</h1>
+      <div class="brand">Daily Brief</div>
+      <h1 id="greet">Good morning, James</h1>
+      <div class="greet-note" id="greet-note"></div>
       <div class="sub" id="today-line">Saturday, July 25, 2026</div>
       <div id="sync-pill">&#9679; Connecting&hellip;</div>
     </div>
@@ -254,6 +256,103 @@
   tick(); setInterval(tick, 1000);
   document.getElementById("built").textContent =
     new Date().toLocaleString([], {hour:'2-digit', minute:'2-digit'});
+
+  // ---- greeting: time-aware, occasionally European ----
+  const GREET = {
+    morning: [
+      {g:"Good morning"}, {g:"Good morning"}, {g:"Morning"},
+      {g:"Buenos días", n:"Good morning in Spanish"},
+      {g:"Bonjour", n:"Good morning in French"},
+      {g:"Buongiorno", n:"Good morning in Italian"},
+      {g:"Guten Morgen", n:"Good morning in German"},
+      {g:"Bom dia", n:"Good morning in Portuguese"},
+      {g:"Goedemorgen", n:"Good morning in Dutch"},
+      {g:"God morgon", n:"Good morning in Swedish"},
+      {g:"God morgen", n:"Good morning in Norwegian"},
+      {g:"Hyvää huomenta", n:"Good morning in Finnish"},
+      {g:"Dzień dobry", n:"Good morning in Polish"},
+      {g:"Dobré ráno", n:"Good morning in Czech"},
+      {g:"Καλημέρα", n:"Kaliméra — good morning in Greek"},
+      {g:"Bore da", n:"Good morning in Welsh"},
+      {g:"Maidin mhaith", n:"Good morning in Irish"},
+      {g:"Bună dimineața", n:"Good morning in Romanian"},
+      {g:"Jó reggelt", n:"Good morning in Hungarian"},
+      {g:"Dobro jutro", n:"Good morning in Croatian"},
+      {g:"Góðan morgun", n:"Good morning in Icelandic"},
+      {g:"Bon dia", n:"Good morning in Catalan"}
+    ],
+    afternoon: [
+      {g:"Good afternoon"}, {g:"Good afternoon"}, {g:"Afternoon"},
+      {g:"Buenas tardes", n:"Good afternoon in Spanish"},
+      {g:"Bon après-midi", n:"Good afternoon in French"},
+      {g:"Buon pomeriggio", n:"Good afternoon in Italian"},
+      {g:"Guten Tag", n:"Good day in German"},
+      {g:"Boa tarde", n:"Good afternoon in Portuguese"},
+      {g:"Goedemiddag", n:"Good afternoon in Dutch"},
+      {g:"God eftermiddag", n:"Good afternoon in Swedish"},
+      {g:"Hyvää iltapäivää", n:"Good afternoon in Finnish"},
+      {g:"Dobré odpoledne", n:"Good afternoon in Czech"},
+      {g:"Καλό απόγευμα", n:"Kaló apógevma — good afternoon in Greek"},
+      {g:"Prynhawn da", n:"Good afternoon in Welsh"},
+      {g:"Bună ziua", n:"Good day in Romanian"},
+      {g:"Jó napot", n:"Good day in Hungarian"},
+      {g:"Dobar dan", n:"Good day in Croatian"},
+      {g:"Bona tarda", n:"Good afternoon in Catalan"}
+    ],
+    evening: [
+      {g:"Good evening"}, {g:"Good evening"}, {g:"Evening"},
+      {g:"Buenas noches", n:"Good evening in Spanish"},
+      {g:"Bonsoir", n:"Good evening in French"},
+      {g:"Buonasera", n:"Good evening in Italian"},
+      {g:"Guten Abend", n:"Good evening in German"},
+      {g:"Boa noite", n:"Good evening in Portuguese"},
+      {g:"Goedenavond", n:"Good evening in Dutch"},
+      {g:"God kväll", n:"Good evening in Swedish"},
+      {g:"God kveld", n:"Good evening in Norwegian"},
+      {g:"God aften", n:"Good evening in Danish"},
+      {g:"Hyvää iltaa", n:"Good evening in Finnish"},
+      {g:"Dobry wieczór", n:"Good evening in Polish"},
+      {g:"Dobrý večer", n:"Good evening in Czech"},
+      {g:"Καλησπέρα", n:"Kalispéra — good evening in Greek"},
+      {g:"Noswaith dda", n:"Good evening in Welsh"},
+      {g:"Bună seara", n:"Good evening in Romanian"},
+      {g:"Jó estét", n:"Good evening in Hungarian"},
+      {g:"Gott kvöld", n:"Good evening in Icelandic"},
+      {g:"Bon vespre", n:"Good evening in Catalan"}
+    ],
+    night: [
+      {g:"Still up"}, {g:"Working late"}, {g:"Good evening"},
+      {g:"Buenas noches", n:"Good night in Spanish"},
+      {g:"Bonne nuit", n:"Good night in French"},
+      {g:"Buonanotte", n:"Good night in Italian"},
+      {g:"Gute Nacht", n:"Good night in German"},
+      {g:"Goedenacht", n:"Good night in Dutch"},
+      {g:"God natt", n:"Good night in Swedish"},
+      {g:"Dobranoc", n:"Good night in Polish"},
+      {g:"Καληνύχτα", n:"Kaliníhta — good night in Greek"},
+      {g:"Nos da", n:"Good night in Welsh"},
+      {g:"Góða nótt", n:"Good night in Icelandic"}
+    ]
+  };
+  function greetFor(h){
+    const slot = (h >= 5 && h < 12) ? "morning"
+               : (h >= 12 && h < 18) ? "afternoon"
+               : (h >= 18 && h < 22) ? "evening" : "night";
+    const pool = GREET[slot];
+    // ~55% plain English, ~45% a European guest greeting
+    const english = pool.filter(x => !x.n), intl = pool.filter(x => x.n);
+    const use = (Math.random() < 0.55 || !intl.length) ? english : intl;
+    return use[Math.floor(Math.random() * use.length)];
+  }
+  function applyGreeting(){
+    const pick = greetFor(new Date().getHours());
+    document.getElementById("greet").textContent = pick.g + ", James";
+    const note = document.getElementById("greet-note");
+    note.textContent = pick.n ? "(" + pick.n + ")" : "";
+    note.style.display = pick.n ? "block" : "none";
+  }
+  applyGreeting();
+
 
 // ===== Firebase cloud sync core (identical in both pages) =====
 const CST_KEY = "cst_tasks_v1";          // local cache of the store
