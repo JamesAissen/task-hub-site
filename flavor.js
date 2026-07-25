@@ -116,9 +116,77 @@
     });
   }
 
+  /* ---------- UI enhancements: clock spacing + Celsius readouts ---------- */
+
+  function injectStyles() {
+    if (document.getElementById("flv-enhance-css")) return;
+    var st = document.createElement("style");
+    st.id = "flv-enhance-css";
+    st.textContent =
+      ".clock{padding:8px 4px 0 24px;}" +
+      ".clock .time{letter-spacing:1px;}" +
+      ".clock .zone{margin-top:7px;}" +
+      ".wx-c{font-size:15px;color:var(--muted);text-align:right;margin-top:3px;font-variant-numeric:tabular-nums;}";
+    document.head.appendChild(st);
+  }
+
+  function addCelsius() {
+    document.querySelectorAll(".wx-top").forEach(function (top) {
+      var t = top.querySelector(".wx-temp");
+      if (!t) return;
+      var f = parseInt((t.textContent || "").replace(/[^\d-]/g, ""), 10);
+      if (isNaN(f)) return;
+      var c = Math.round((f - 32) * 5 / 9);
+      var holder = t.parentElement === top ? t : t.parentElement;
+      var cEl = holder.querySelector(".wx-c");
+      if (t.parentElement === top) {
+        var wrap = document.createElement("div");
+        top.replaceChild(wrap, t);
+        wrap.appendChild(t);
+        holder = wrap;
+        cEl = null;
+      }
+      if (!cEl) {
+        cEl = document.createElement("div");
+        cEl.className = "wx-c";
+        holder.appendChild(cEl);
+      }
+      cEl.textContent = c + "°C";
+    });
+  }
+
+  function hookWeatherRepaints() {
+    // paintWx rewrites the temp HTML on data render + every 15s cycle;
+    // wrap it so the Celsius line is re-added after each repaint.
+    if (typeof window.paintWx === "function" && !window.paintWx.__flvWrapped) {
+      var orig = window.paintWx;
+      var wrapped = function (el, w) {
+        orig(el, w);
+        setTimeout(addCelsius, 420);
+      };
+      wrapped.__flvWrapped = true;
+      window.paintWx = wrapped;
+    }
+  }
+
+  function enhance() {
+    injectStyles();
+    addCelsius();
+    hookWeatherRepaints();
+    // retry briefly in case the brief data paints after us
+    var tries = 0;
+    var iv = setInterval(function () {
+      addCelsius();
+      hookWeatherRepaints();
+      if (++tries >= 5) clearInterval(iv);
+    }, 1000);
+  }
+
+  function start() { build(); enhance(); }
+
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", build);
+    document.addEventListener("DOMContentLoaded", start);
   } else {
-    build();
+    start();
   }
 })();
