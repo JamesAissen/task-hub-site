@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Task Hub</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#070b12">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+
 <style>
   :root{
     --bg:#070b12; --panel:#0e1622; --panel2:#111d2e; --line:#1d2c40;
@@ -29,6 +33,7 @@
   .brand{font-size:13px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
   h1{margin:6px 0 2px;font-size:30px;font-weight:600;letter-spacing:.5px;}
   .sub{color:var(--muted);font-size:14px;}
+  .navrow{display:flex;gap:8px;flex-wrap:wrap;}
   .back-btn{
     background:transparent;border:1px solid var(--cyan-dim);color:var(--cyan);
     border-radius:9px;padding:9px 16px;font-size:14px;cursor:pointer;font-weight:600;
@@ -147,7 +152,7 @@
       <div class="sub" id="subline">All your tasks, synced to your private cloud database</div>
       <div id="sync-pill">&#9679; Connecting&hellip;</div>
     </div>
-    <a class="back-btn" href="./">&larr; Morning Brief</a>
+    <div class="navrow"><a class="back-btn" href="./">&larr; Daily Brief</a><a class="back-btn" href="orders.html">Orders</a></div>
   </header>
 
   <div class="stats">
@@ -621,6 +626,11 @@ async function startStream(){
 cstWireLogin();
 render();
 initSync();
+
+  // ---- installable app (hosted only) ----
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
 </script>
 </body>
 </html>

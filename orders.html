@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#070b12">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root{
+    --bg:#070b12; --panel:#0e1622; --panel2:#111d2e; --line:#1d2c40;
+    --text:#dbe7f5; --muted:#7f93ac; --cyan:#39d3ff; --cyan-dim:#1c7f9e;
+    --amber:#ffce54; --green:#3ddc97; --red:#ff6b6b; --glow:0 0 18px rgba(57,211,255,.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{background:radial-gradient(1200px 700px at 70% -10%, #10233a 0%, var(--bg) 55%);
+    color:var(--text);font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh;padding:26px 22px 80px;}
+  a{color:var(--cyan);text-decoration:none;}
+  .wrap{max-width:1180px;margin:0 auto;visibility:hidden;}
+  body.authed .wrap{visibility:visible;}
+  header{display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .brand{font-size:13px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
+  h1{margin:6px 0 2px;font-size:30px;font-weight:600;letter-spacing:.5px;}
+  #sync-pill{font-size:12px;letter-spacing:1px;margin-top:6px;color:var(--muted);}
+  .nav{display:flex;gap:8px;flex-wrap:wrap;}
+  .nav a{border:1px solid var(--cyan-dim);border-radius:9px;padding:9px 15px;font-size:14px;font-weight:600;}
+  .nav a:hover{border-color:var(--cyan);box-shadow:var(--glow);}
+  .nav a.on{background:rgba(57,211,255,.12);}
+
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+  .stat{flex:1;min-width:130px;background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .stat .n{font-size:26px;font-weight:700;color:var(--cyan);text-shadow:var(--glow);}
+  .stat .n.amber{color:var(--amber);} .stat .n.green{color:var(--green);}
+  .stat .k{color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+
+  .addbox{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:14px;margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;}
+  .addbox input{background:#0a1420;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
+    color:var(--text);font-size:14px;}
+  .addbox input.cust{flex:1;min-width:150px;} .addbox input.item{flex:2;min-width:200px;}
+  .addbox input.qty{width:70px;}
+  .addbox button{background:var(--cyan);border:none;border-radius:8px;color:#061019;font-weight:700;
+    padding:10px 20px;cursor:pointer;font-size:14px;}
+
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  @media(max-width:900px){.board{grid-template-columns:1fr;}}
+  .col h2{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);
+    font-weight:700;margin:0 0 8px 4px;display:flex;align-items:center;gap:8px;}
+  .col h2 .dot{width:7px;height:7px;border-radius:50%;}
+  .dot.ordered{background:var(--amber);} .dot.ready{background:var(--cyan);box-shadow:var(--glow);}
+  .dot.shipped{background:var(--green);}
+  .col h2 .count{color:#4d5f78;}
+  .lane{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:14px;padding:12px;min-height:90px;}
+  .ord{background:#0a1420;border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;}
+  .ord:last-child{margin-bottom:0;}
+  .ord .cust{font-weight:600;font-size:15px;}
+  .ord .item{color:var(--muted);font-size:13px;margin-top:2px;}
+  .ord .notes{color:#5f7189;font-size:12px;margin-top:6px;font-style:italic;}
+  .ord .row{display:flex;gap:6px;align-items:center;margin-top:9px;flex-wrap:wrap;}
+  .badge{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:5px;
+    border:1px solid var(--line);color:var(--muted);cursor:pointer;}
+  .badge.paid{color:var(--green);border-color:var(--green);}
+  .badge.unpaid{color:var(--amber);border-color:var(--amber);}
+  .badge.age{cursor:default;}
+  .badge.age.old{color:var(--red);border-color:#6b2a2a;}
+  .mv{margin-left:auto;display:flex;gap:6px;}
+  .mv button{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:7px;
+    width:30px;height:28px;cursor:pointer;font-size:13px;line-height:1;}
+  .mv button:hover{border-color:var(--cyan);color:var(--cyan);}
+  .mv button.del:hover{border-color:var(--red);color:var(--red);}
+  .empty{color:#4d5f78;font-size:13px;padding:10px 4px;}
+  .eform input,.eform textarea{width:100%;background:#08111c;border:1px solid var(--cyan-dim);
+    border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;margin-bottom:7px;font-family:inherit;}
+  .eform .btns{display:flex;gap:7px;}
+  .eform .save{background:var(--green);border:none;border-radius:8px;color:#061019;font-weight:700;
+    padding:7px 14px;cursor:pointer;}
+  .eform .cancel{background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--muted);
+    padding:7px 12px;cursor:pointer;}
+  footer{margin-top:28px;text-align:center;color:#4d5f78;font-size:12px;letter-spacing:1px;}
+  #sign-out{color:#4d5f78;text-decoration:underline;cursor:pointer;}
+
+  #login-ov{position:fixed;inset:0;background:#05080e;display:none;align-items:center;justify-content:center;z-index:50;}
+  .login-box{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:28px;width:min(360px,92vw);box-shadow:0 12px 48px rgba(0,0,0,.6);}
+  .login-box .lb-title{font-size:20px;font-weight:600;margin-bottom:4px;}
+  .login-box .lb-sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .login-box input{width:100%;background:#0a1420;border:1px solid var(--line);border-radius:8px;
+    padding:11px 12px;color:var(--text);font-size:14px;margin-bottom:10px;}
+  #lg-err{color:var(--red);font-size:13px;min-height:18px;margin-bottom:6px;}
+  #lg-btn{width:100%;background:var(--cyan);border:none;border-radius:8px;color:#061019;font-weight:700;
+    padding:11px;cursor:pointer;font-size:15px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">Orders</div>
+      <h1>Disc &amp; Media Orders</h1>
+      <div id="sync-pill">&#9679; Connecting&hellip;</div>
+    </div>
+    <div class="nav">
+      <a href="./">Daily Brief</a>
+      <a href="tasks.html">Task Hub</a>
+      <a class="on" href="#">Orders</a>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="s-open">0</div><div class="k">In progress</div></div>
+    <div class="stat"><div class="n amber" id="s-unpaid">0</div><div class="k">Unpaid</div></div>
+    <div class="stat"><div class="n" id="s-wait">0</div><div class="k">Oldest (days)</div></div>
+    <div class="stat"><div class="n green" id="s-ship">0</div><div class="k">Shipped</div></div>
+  </div>
+
+  <div class="addbox">
+    <input class="cust" id="a-cust" placeholder="Customer&hellip;">
+    <input class="item" id="a-item" placeholder="What they ordered&hellip;">
+    <input class="qty" id="a-qty" type="number" min="1" value="1">
+    <button id="a-btn">Add order</button>
+  </div>
+
+  <div class="board">
+    <div class="col"><h2><span class="dot ordered"></span>Ordered <span class="count" id="c-ordered"></span></h2>
+      <div class="lane" id="l-ordered"></div></div>
+    <div class="col"><h2><span class="dot ready"></span>Ready to ship <span class="count" id="c-ready"></span></h2>
+      <div class="lane" id="l-ready"></div></div>
+    <div class="col"><h2><span class="dot shipped"></span>Shipped <span class="count" id="c-shipped"></span></h2>
+      <div class="lane" id="l-shipped"></div></div>
+  </div>
+
+  <footer>Synced with your private database &middot; <a id="sign-out">Sign out</a></footer>
+</div>
+
+<div id="login-ov">
+  <div class="login-box">
+    <div class="lb-title">Sign in</div>
+    <div class="lb-sub">Your orders live in your private cloud database. Sign in to view them.</div>
+    <input id="lg-email" type="email" autocomplete="username" placeholder="Email">
+    <input id="lg-pw" type="password" autocomplete="current-password" placeholder="Password">
+    <div id="lg-err"></div>
+    <button id="lg-btn">Sign in</button>
+  </div>
+</div>
+
+<script>
+const OKEY = "cst_orders_v1";
+const CST_AUTH = "cst_auth_v1";
+const FB = Object.assign({
+  apiKey: "AIzaSyD6jPGiiJdC4pjC079dH9gG0B6rlM0vBD4",
+  authUrl: "https://identitytoolkit.googleapis.com/v1",
+  tokenUrl: "https://securetoken.googleapis.com/v1",
+  dbUrl: "https://james-task-hub-default-rtdb.firebaseio.com",
+  email: ""
+}, window.CST_TEST_ENDPOINTS || {});
+
+const SEED_ORDERS = [];
+
+const STAGES = ["ordered", "ready", "shipped"];
+const todayStr = new Date().toLocaleDateString("sv-SE");
+
+function norm(s){
+  if (!s || typeof s !== "object") return null;
+  const items = Array.isArray(s.items) ? s.items : Object.values(s.items || {});
+  return { items: items.filter(Boolean), seeded: s.seeded || {}, deleted: s.deleted || {} };
+}
+function loadLocal(){
+  let s; try { s = norm(JSON.parse(localStorage.getItem(OKEY))); } catch(e){ s = null; }
+  if (!s) s = { items: [], seeded: {}, deleted: {} };
+  let changed = false;
+  const have = new Set(s.items.map(o => o.id));
+  SEED_ORDERS.forEach(o => {
+    if (!s.seeded[o.id]) { s.seeded[o.id] = true; changed = true;
+      if (!have.has(o.id) && !s.deleted[o.id]) s.items.push(JSON.parse(JSON.stringify(o))); }
+  });
+  if (changed) localStorage.setItem(OKEY, JSON.stringify(s));
+  return s;
+}
+function merge(a, b){
+  a = norm(a); b = norm(b);
+  if (!a) return b; if (!b) return a;
+  const out = { items: [], seeded: Object.assign({}, a.seeded, b.seeded),
+                deleted: Object.assign({}, a.deleted, b.deleted) };
+  const by = {};
+  [].concat(a.items, b.items).forEach(o => {
+    if (out.deleted[o.id]) return;
+    const p = by[o.id];
+    if (!p || (o.updatedAt || "") > (p.updatedAt || "")) by[o.id] = o;
+  });
+  out.items = Object.values(by);
+  return out;
+}
+
+let session = { idToken:null, uid:null, exp:0 }, syncTimer=null, retryTimer=null;
+async function fbSignIn(email, pw){
+  const r = await fetch(FB.authUrl + "/accounts:signInWithPassword?key=" + FB.apiKey,
+    { method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({email:email, password:pw, returnSecureToken:true}) });
+  const d = await r.json().catch(()=>({}));
+  if (!r.ok) throw new Error((d.error && d.error.message) || "SIGN_IN_FAILED");
+  session = { idToken:d.idToken, uid:d.localId, exp: Date.now() + (parseInt(d.expiresIn||"3600",10)-300)*1000 };
+  localStorage.setItem(CST_AUTH, JSON.stringify({refreshToken:d.refreshToken, uid:d.localId, email:email}));
+  return session;
+}
+async function fbRefresh(){
+  let a; try { a = JSON.parse(localStorage.getItem(CST_AUTH)); } catch(e){ a = null; }
+  if (!a || !a.refreshToken) return null;
+  let r, d;
+  try {
+    r = await fetch(FB.tokenUrl + "/token?key=" + FB.apiKey, { method:"POST",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:"grant_type=refresh_token&refresh_token=" + encodeURIComponent(a.refreshToken) });
+    d = await r.json();
+  } catch(e){ throw new Error("NETWORK"); }
+  if (!r.ok) {
+    const m = (d && d.error && d.error.message) || "";
+    if (/TOKEN|USER_DISABLED|USER_NOT_FOUND/.test(m)) localStorage.removeItem(CST_AUTH);
+    return null;
+  }
+  session = { idToken:d.id_token, uid:d.user_id, exp: Date.now() + (parseInt(d.expires_in||"3600",10)-300)*1000 };
+  a.refreshToken = d.refresh_token || a.refreshToken;
+  localStorage.setItem(CST_AUTH, JSON.stringify(a));
+  return session;
+}
+async function fbToken(){
+  if (session.idToken && Date.now() < session.exp) return session.idToken;
+  const s = await fbRefresh(); return s ? s.idToken : null;
+}
+async function cloudGet(){
+  const tk = await fbToken(); if (!tk) return undefined;
+  const r = await fetch(FB.dbUrl + "/users/" + session.uid + "/orders.json?auth=" + tk);
+  if (!r.ok) throw new Error("DB_" + r.status);
+  return await r.json();
+}
+async function cloudPut(s){
+  const tk = await fbToken(); if (!tk) return false;
+  const r = await fetch(FB.dbUrl + "/users/" + session.uid + "/orders.json?auth=" + tk,
+    { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify(s) });
+  return r.ok;
+}
+function setSync(state){
+  const el = document.getElementById("sync-pill"); if (!el) return;
+  const map = { synced:["● Synced","#3ddc97"], syncing:["● Syncing…","#ffce54"],
+                offline:["● Offline — saved locally","#ffce54"],
+                signedout:["● Not signed in","#ff6b6b"] };
+  const m = map[state] || map.offline; el.textContent = m[0]; el.style.color = m[1];
+}
+function save(){ localStorage.setItem(OKEY, JSON.stringify(store)); clearTimeout(syncTimer); syncTimer = setTimeout(push, 800); }
+async function push(){
+  if (!localStorage.getItem(CST_AUTH)) return;
+  setSync("syncing");
+  try { const ok = await cloudPut(JSON.parse(localStorage.getItem(OKEY)));
+    setSync(ok ? "synced" : "signedout"); if (!ok) showLogin();
+  } catch(e){ setSync("offline"); clearTimeout(retryTimer); retryTimer = setTimeout(push, 60000); }
+}
+async function initSync(){
+  if (!localStorage.getItem(CST_AUTH)) { document.body.classList.remove("authed"); setSync("signedout"); showLogin(); return; }
+  document.body.classList.add("authed");
+  setSync("syncing");
+  try {
+    const tk = await fbToken();
+    if (!tk) { document.body.classList.remove("authed"); setSync("signedout"); showLogin(); return; }
+    const merged = merge(await cloudGet(), loadLocal());
+    localStorage.setItem(OKEY, JSON.stringify(merged));
+    store = merged;
+    await cloudPut(merged);
+    setSync("synced"); render();
+  } catch(e){ setSync("offline"); clearTimeout(retryTimer); retryTimer = setTimeout(initSync, 60000); }
+}
+function showLogin(){
+  const ov = document.getElementById("login-ov"); if (!ov) return;
+  let a; try { a = JSON.parse(localStorage.getItem(CST_AUTH)); } catch(e){}
+  document.getElementById("lg-email").value = (a && a.email) || FB.email;
+  document.getElementById("lg-err").textContent = "";
+  ov.style.display = "flex";
+}
+function wireLogin(){
+  const ov = document.getElementById("login-ov"), err = document.getElementById("lg-err");
+  async function go(){
+    err.textContent = "";
+    const email = document.getElementById("lg-email").value.trim(), pw = document.getElementById("lg-pw").value;
+    if (!email || !pw) { err.textContent = "Enter your email and password."; return; }
+    document.getElementById("lg-btn").disabled = true;
+    try { await fbSignIn(email, pw); document.body.classList.add("authed");
+      ov.style.display = "none"; document.getElementById("lg-pw").value = ""; initSync();
+    } catch(e){
+      const m = { EMAIL_NOT_FOUND:"No account with that email.", INVALID_PASSWORD:"Wrong password.",
+                  INVALID_LOGIN_CREDENTIALS:"Wrong email or password.",
+                  TOO_MANY_ATTEMPTS_TRY_LATER:"Too many tries — wait a minute." };
+      err.textContent = m[e.message] || ("Couldn’t sign in (" + e.message + ")");
+    } finally { document.getElementById("lg-btn").disabled = false; }
+  }
+  document.getElementById("lg-btn").addEventListener("click", go);
+  document.getElementById("lg-pw").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  document.getElementById("sign-out").addEventListener("click", e => {
+    e.preventDefault();
+    if (!confirm("Sign out and remove this data from this browser? It stays safe in your cloud database.")) return;
+    localStorage.removeItem(CST_AUTH); localStorage.removeItem(OKEY);
+    session = { idToken:null, uid:null, exp:0 }; store = { items:[], seeded:{}, deleted:{} };
+    document.body.classList.remove("authed"); setSync("signedout"); render(); showLogin();
+  });
+}
+
+let store = loadLocal(), editing = null;
+function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ageDays(o){
+  const d = o.created || todayStr;
+  return Math.max(0, Math.round((new Date(todayStr) - new Date(d)) / 864e5));
+}
+function card(o){
+  const age = ageDays(o), stale = o.stage !== "shipped" && age > 7;
+  return '<div class="ord" data-id="' + o.id + '">' +
+    '<div class="cust">' + esc(o.cust) + (o.qty > 1 ? ' <span class="badge age">x' + o.qty + '</span>' : '') + '</div>' +
+    '<div class="item">' + esc(o.item) + '</div>' +
+    (o.notes ? '<div class="notes">' + esc(o.notes) + '</div>' : '') +
+    '<div class="row">' +
+      '<span class="badge ' + (o.paid ? "paid" : "unpaid") + '" data-act="paid">' + (o.paid ? "Paid" : "Unpaid") + '</span>' +
+      '<span class="badge age' + (stale ? " old" : "") + '">' + age + 'd</span>' +
+      '<span class="mv">' +
+        (o.stage !== "ordered" ? '<button data-act="back" title="Move back">&#8592;</button>' : '') +
+        '<button data-act="edit" title="Edit">&#9998;</button>' +
+        '<button class="del" data-act="del" title="Delete">&#10005;</button>' +
+        (o.stage !== "shipped" ? '<button data-act="fwd" title="Move forward">&#8594;</button>' : '') +
+      '</span>' +
+    '</div></div>';
+}
+function editCard(o){
+  return '<div class="ord" data-id="' + o.id + '"><div class="eform">' +
+    '<input class="e-cust" value="' + esc(o.cust) + '" placeholder="Customer">' +
+    '<input class="e-item" value="' + esc(o.item) + '" placeholder="Item">' +
+    '<input class="e-contact" value="' + esc(o.contact) + '" placeholder="Email or phone">' +
+    '<textarea class="e-notes" rows="2" placeholder="Notes">' + esc(o.notes) + '</textarea>' +
+    '<div class="btns"><button class="save" data-act="save">Save</button>' +
+    '<button class="cancel" data-act="cancel">Cancel</button></div></div></div>';
+}
+function render(){
+  STAGES.forEach(st => {
+    const list = store.items.filter(o => o.stage === st)
+      .sort((a,b) => (a.created||"").localeCompare(b.created||""));
+    document.getElementById("c-" + st).textContent = "(" + list.length + ")";
+    document.getElementById("l-" + st).innerHTML = list.length
+      ? list.map(o => o.id === editing ? editCard(o) : card(o)).join("")
+      : '<div class="empty">Nothing here.</div>';
+  });
+  const active = store.items.filter(o => o.stage !== "shipped");
+  document.getElementById("s-open").textContent = active.length;
+  document.getElementById("s-unpaid").textContent = store.items.filter(o => !o.paid && o.stage !== "shipped").length;
+  document.getElementById("s-wait").textContent = active.length ? Math.max.apply(null, active.map(ageDays)) : 0;
+  document.getElementById("s-ship").textContent = store.items.filter(o => o.stage === "shipped").length;
+}
+document.addEventListener("click", e => {
+  const btn = e.target.closest("[data-act]"); if (!btn) return;
+  const el = e.target.closest(".ord"); if (!el) return;
+  const o = store.items.find(x => x.id === el.dataset.id); if (!o) return;
+  const act = btn.dataset.act;
+  const stamp = () => { o.updatedAt = new Date().toISOString(); };
+  if (act === "paid") { o.paid = !o.paid; stamp(); save(); render(); }
+  else if (act === "fwd") { o.stage = STAGES[Math.min(2, STAGES.indexOf(o.stage) + 1)];
+    if (o.stage === "shipped") o.shippedAt = new Date().toISOString(); stamp(); save(); render(); }
+  else if (act === "back") { o.stage = STAGES[Math.max(0, STAGES.indexOf(o.stage) - 1)]; stamp(); save(); render(); }
+  else if (act === "edit") { editing = o.id; render(); }
+  else if (act === "cancel") { editing = null; render(); }
+  else if (act === "del") { if (confirm("Delete this order?\n\n" + o.cust + " — " + o.item)) {
+      store.items = store.items.filter(x => x.id !== o.id);
+      store.deleted = store.deleted || {}; store.deleted[o.id] = new Date().toISOString();
+      save(); render(); } }
+  else if (act === "save") {
+    o.cust = el.querySelector(".e-cust").value.trim() || o.cust;
+    o.item = el.querySelector(".e-item").value.trim();
+    o.contact = el.querySelector(".e-contact").value.trim();
+    o.notes = el.querySelector(".e-notes").value.trim();
+    stamp(); editing = null; save(); render();
+  }
+});
+function addOrder(){
+  const c = document.getElementById("a-cust"), i = document.getElementById("a-item"), q = document.getElementById("a-qty");
+  if (!c.value.trim()) { c.focus(); return; }
+  store.items.push({ id: "o" + Math.random().toString(36).slice(2,9), cust: c.value.trim(),
+    item: i.value.trim() || "Order", contact: "", qty: parseInt(q.value,10) || 1, price: null,
+    paid: false, stage: "ordered", notes: "", created: todayStr, updatedAt: new Date().toISOString() });
+  c.value = ""; i.value = ""; q.value = 1; save(); render();
+}
+document.getElementById("a-btn").addEventListener("click", addOrder);
+["a-cust","a-item"].forEach(id => document.getElementById(id)
+  .addEventListener("keydown", e => { if (e.key === "Enter") addOrder(); }));
+window.addEventListener("storage", e => { if (e.key === OKEY) { store = loadLocal(); render(); } });
+
+wireLogin(); render(); initSync();
+
+  // ---- installable app (hosted only) ----
+  if ("serviceWorker" in navigator && location.protocol.startsWith("http")) {
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+  }
+</script>
+</body>
+</html>
