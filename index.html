@@ -19,7 +19,8 @@
     min-height:100vh; padding:26px 22px 60px;
   }
   a{color:var(--cyan);text-decoration:none;}
-  .wrap{max-width:1180px;margin:0 auto;}
+  .wrap{max-width:1180px;margin:0 auto;visibility:hidden;}
+  body.authed .wrap{visibility:visible;}
   header{
     display:flex;justify-content:space-between;align-items:flex-end;
     border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px;
@@ -113,7 +114,7 @@
 
   /* sign-in overlay + sync pill */
   #sync-pill{font-size:12px;letter-spacing:1px;margin-top:6px;color:var(--muted);}
-  #login-ov{position:fixed;inset:0;background:rgba(4,8,14,.82);backdrop-filter:blur(4px);
+  #login-ov{position:fixed;inset:0;background:#05080e;
     display:none;align-items:center;justify-content:center;z-index:50;}
   .login-box{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
     border-radius:16px;padding:28px;width:min(360px,92vw);box-shadow:0 12px 48px rgba(0,0,0,.6);}
@@ -126,8 +127,6 @@
   #lg-btn{width:100%;background:var(--cyan);border:none;border-radius:8px;color:#061019;
     font-weight:700;padding:11px;cursor:pointer;font-size:15px;}
   #lg-btn:disabled{opacity:.6;}
-  #lg-skip{width:100%;background:transparent;border:none;color:var(--muted);padding:10px 0 0;
-    cursor:pointer;font-size:13px;text-decoration:underline;}
   #sign-out{color:#4d5f78;text-decoration:underline;cursor:pointer;}
 </style>
 </head>
@@ -228,13 +227,13 @@
 
 <div id="login-ov">
   <div class="login-box">
-    <div class="lb-title">Sign in to sync</div>
-    <div class="lb-sub">Tasks sync to your private Firebase database and stay saved on this computer either way.</div>
+    <div class="brand" style="margin-bottom:8px;">Comprehensive Sound</div>
+    <div class="lb-title">Sign in</div>
+    <div class="lb-sub">Your tasks live in your private cloud database. Sign in to view them.</div>
     <input id="lg-email" type="email" autocomplete="username" placeholder="Email">
     <input id="lg-pw" type="password" autocomplete="current-password" placeholder="Password">
     <div id="lg-err"></div>
     <button id="lg-btn">Sign in</button>
-    <button id="lg-skip">Work offline for now</button>
   </div>
 </div>
 
@@ -389,11 +388,12 @@ async function pushNow(){
   }
 }
 async function initSync(){
-  if (!localStorage.getItem(CST_AUTH)) { setSync("signedout"); cstShowLogin(); return; }
+  if (!localStorage.getItem(CST_AUTH)) { document.body.classList.remove("authed"); setSync("signedout"); cstShowLogin(); return; }
+  document.body.classList.add("authed");
   setSync("syncing");
   try {
     const tk = await fbToken();
-    if (!tk) { setSync("signedout"); cstShowLogin(); return; }
+    if (!tk) { document.body.classList.remove("authed"); setSync("signedout"); cstShowLogin(); return; }
     const root = (await cloudGetRoot()) || {};
     const merged = mergeStores(root.store, cstLoadLocal());
     const inbox = root.inbox || {};
@@ -435,6 +435,7 @@ function cstWireLogin(){
     document.getElementById("lg-btn").disabled = true;
     try {
       await fbSignIn(email, pw);
+      document.body.classList.add("authed");
       ov.style.display = "none";
       document.getElementById("lg-pw").value = "";
       initSync();
@@ -448,13 +449,17 @@ function cstWireLogin(){
   }
   document.getElementById("lg-btn").addEventListener("click", go);
   document.getElementById("lg-pw").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
-  document.getElementById("lg-skip").addEventListener("click", () => { ov.style.display = "none"; });
   const so = document.getElementById("sign-out");
   if (so) so.addEventListener("click", e => {
     e.preventDefault();
+    if (!confirm("Sign out and remove tasks from this browser? They stay safe in your cloud database.")) return;
     localStorage.removeItem(CST_AUTH);
+    localStorage.removeItem(CST_KEY);
+    localStorage.removeItem("cst_brief_v1");
     session = { idToken: null, uid: null, exp: 0 };
-    setSync("signedout"); cstShowLogin();
+    store = { tasks: [], seeded: {}, deleted: {} };
+    document.body.classList.remove("authed");
+    setSync("signedout"); render(); cstShowLogin();
   });
 }
 function cstNewId(){ return "u" + Math.random().toString(36).slice(2,9); }
