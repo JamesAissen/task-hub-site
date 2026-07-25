@@ -29,6 +29,12 @@
   .brand{font-size:13px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
   h1{margin:6px 0 2px;font-size:30px;font-weight:600;letter-spacing:.5px;}
   .sub{color:var(--muted);font-size:14px;}
+  .clock .time .sec{font-size:20px;color:var(--cyan-dim);}
+  #wx1{transition:opacity .17s ease;}
+  .wx-dots{display:flex;gap:6px;justify-content:center;margin-top:12px;}
+  .wx-dots i{width:6px;height:6px;border-radius:50%;background:var(--line);display:block;}
+  .wx-dots i.on{background:var(--cyan);box-shadow:var(--glow);}
+  .evt-cal{display:block;font-size:11px;color:#5f7189;margin-top:2px;letter-spacing:.3px;}
   .greet-note{color:#5f7189;font-size:12px;font-style:italic;margin:0 0 3px;letter-spacing:.3px;}
   .clock{text-align:right;}
   .clock .time{font-size:34px;font-weight:600;color:var(--cyan);text-shadow:var(--glow);font-variant-numeric:tabular-nums;}
@@ -183,6 +189,7 @@
         <div class="chip"><div class="k">Wind</div><div class="v">N, light</div></div>
         <div class="chip"><div class="k">Rain</div><div class="v rain">15%</div></div>
       </div>
+      <div class="wx-dots" id="wx-dots"></div>
     </div>
 
     <!-- CALENDAR -->
@@ -250,8 +257,9 @@
     let h = now.getHours(), m = now.getMinutes();
     const ap = h >= 12 ? "PM" : "AM";
     h = h % 12; if (h === 0) h = 12;
-    document.getElementById("clock").textContent =
-      h + ":" + String(m).padStart(2,"0") + " " + ap;
+    document.getElementById("clock").innerHTML =
+      h + ":" + String(m).padStart(2,"0") +
+      '<span class="sec">:' + String(now.getSeconds()).padStart(2,"0") + '</span> ' + ap;
   }
   tick(); setInterval(tick, 1000);
   document.getElementById("built").textContent =
@@ -623,28 +631,57 @@ function cstNewId(){ return "u" + Math.random().toString(36).slice(2,9); }
     cstSave(store); inp.value=""; render();
   }
 
+
+  // ---- weather panel painting + 15s cycling for the second panel ----
+  let wxTimer = null;
+  function paintWx(el, w){
+    if (!el || !w) return;
+    el.style.opacity = "0";
+    setTimeout(() => {
+      el.querySelector(".wx-town").textContent = w.town || "";
+      el.querySelector(".wx-state").textContent = w.state || "";
+      el.querySelector(".wx-temp").innerHTML = w.hi + "&deg;<small>F</small>";
+      el.querySelector(".wx-cond").textContent = w.cond || "";
+      const chips = el.querySelectorAll(".chip .v");
+      if (chips[0]) chips[0].innerHTML = w.lo + "&deg;F";
+      if (chips[1]) chips[1].textContent = w.wind || "";
+      if (chips[2]) chips[2].textContent = w.rain || "";
+      el.style.opacity = "1";
+    }, 170);
+  }
+  function paintDots(i, n){
+    const d = document.getElementById("wx-dots"); if (!d) return;
+    d.innerHTML = n > 1 ? Array.from({length:n}, (_, k) => '<i class="' + (k === i ? "on" : "") + '"></i>').join("") : "";
+  }
+  function startWxCycle(list){
+    clearInterval(wxTimer);
+    if (!list || !list.length) return;
+    let i = 0;
+    paintWx(document.getElementById("wx1"), list[0]);
+    paintDots(0, list.length);
+    if (list.length < 2) return;
+    wxTimer = setInterval(() => {
+      i = (i + 1) % list.length;
+      paintWx(document.getElementById("wx1"), list[i]);
+      paintDots(i, list.length);
+    }, 15000);
+  }
+
   // ---- render daily brief data (weather/calendar/inbox) delivered via Firebase ----
   const CST_BRIEF = "cst_brief_v1";
   function renderBrief(b){
     if (!b) { try { b = JSON.parse(localStorage.getItem(CST_BRIEF)); } catch(e){ b = null; } }
     if (!b) return;
     localStorage.setItem(CST_BRIEF, JSON.stringify(b));
-    (b.weather || []).slice(0, 2).forEach((w, i) => {
-      const p = document.getElementById("wx" + i); if (!p) return;
-      p.querySelector(".wx-town").textContent = w.town || "";
-      p.querySelector(".wx-state").textContent = w.state || "";
-      p.querySelector(".wx-temp").innerHTML = w.hi + "&deg;<small>F</small>";
-      p.querySelector(".wx-cond").textContent = w.cond || "";
-      const chips = p.querySelectorAll(".chip .v");
-      if (chips[0]) chips[0].innerHTML = w.lo + "&deg;F";
-      if (chips[1]) chips[1].textContent = w.wind || "";
-      if (chips[2]) chips[2].textContent = w.rain || "";
-    });
+    const wx = b.weather || [];
+    if (wx[0]) paintWx(document.getElementById("wx0"), wx[0]);
+    startWxCycle(wx.slice(1));
     const cal = document.getElementById("cal-body");
     if (cal) {
       cal.innerHTML = (b.calendar && b.calendar.length)
-        ? b.calendar.map(ev => '<div class="evt"><div class="t">' + escapeHtml(ev.t || "") + '</div><div class="n">' + escapeHtml(ev.n || "") + '</div></div>').join("")
-        : '<div class="cal-empty"><div class="big">Your day is open</div><div>No events scheduled on your calendar for today.</div></div>';
+        ? b.calendar.map(ev => '<div class="evt"><div class="t">' + escapeHtml(ev.t || "") + '</div><div class="n">' + escapeHtml(ev.n || "") +
+            (ev.c ? '<span class="evt-cal">' + escapeHtml(ev.c) + '</span>' : '') + '</div></div>').join("")
+        : '<div class="cal-empty"><div class="big">Your day is open</div><div>No events scheduled on any of your calendars today.</div></div>';
     }
     const ib = document.getElementById("inbox");
     if (ib) {
