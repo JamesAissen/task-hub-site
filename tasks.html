@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Task Hub — Comprehensive Sound</title>
+<style>
+  :root{
+    --bg:#070b12; --panel:#0e1622; --panel2:#111d2e; --line:#1d2c40;
+    --text:#dbe7f5; --muted:#7f93ac; --cyan:#39d3ff; --cyan-dim:#1c7f9e;
+    --amber:#ffce54; --green:#3ddc97; --red:#ff6b6b; --glow:0 0 18px rgba(57,211,255,.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(1200px 700px at 70% -10%, #10233a 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh; padding:26px 22px 80px;
+  }
+  a{color:var(--cyan);text-decoration:none;}
+  .wrap{max-width:980px;margin:0 auto;}
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px;
+    flex-wrap:wrap;gap:12px;
+  }
+  .brand{font-size:13px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
+  h1{margin:6px 0 2px;font-size:30px;font-weight:600;letter-spacing:.5px;}
+  .sub{color:var(--muted);font-size:14px;}
+  .back-btn{
+    background:transparent;border:1px solid var(--cyan-dim);color:var(--cyan);
+    border-radius:9px;padding:9px 16px;font-size:14px;cursor:pointer;font-weight:600;
+    display:inline-block;
+  }
+  .back-btn:hover{border-color:var(--cyan);box-shadow:var(--glow);}
+
+  /* stats */
+  .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
+  .stat{flex:1;min-width:130px;background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
+  .stat .n{font-size:26px;font-weight:700;color:var(--cyan);text-shadow:var(--glow);}
+  .stat .n.red{color:var(--red);text-shadow:0 0 14px rgba(255,107,107,.3);}
+  .stat .n.green{color:var(--green);text-shadow:0 0 14px rgba(61,220,151,.3);}
+  .stat .k{color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+
+  /* controls */
+  .controls{background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:18px;}
+  .row1{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;}
+  .row1 input[type=text]{flex:2;min-width:200px;background:#0a1420;border:1px solid var(--line);
+    border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;}
+  .row1 select,.row1 input[type=date]{background:#0a1420;border:1px solid var(--line);border-radius:8px;
+    padding:10px;color:var(--text);font-size:13px;flex:1;min-width:110px;color-scheme:dark;}
+  .row1 button{background:var(--cyan);border:none;border-radius:8px;color:#061019;font-weight:700;
+    padding:10px 20px;cursor:pointer;font-size:14px;}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  .fchip{background:#0a1420;border:1px solid var(--line);color:var(--muted);border-radius:20px;
+    padding:6px 14px;font-size:13px;cursor:pointer;user-select:none;}
+  .fchip.on{border-color:var(--cyan);color:var(--cyan);box-shadow:var(--glow);}
+  .filters input{margin-left:auto;background:#0a1420;border:1px solid var(--line);border-radius:20px;
+    padding:7px 14px;color:var(--text);font-size:13px;width:180px;}
+
+  /* groups */
+  .group{margin-bottom:20px;}
+  .group h2{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);
+    font-weight:700;margin:0 0 8px 4px;display:flex;align-items:center;gap:8px;}
+  .group h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:var(--glow);}
+  .group h2 .dot.red{background:var(--red);} .group h2 .dot.green{background:var(--green);}
+  .group h2 .dot.gray{background:#4d5f78;box-shadow:none;}
+  .group h2 .count{color:#4d5f78;font-weight:600;}
+  .glist{background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:14px;padding:4px 16px;}
+
+  /* task rows */
+  .task{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
+  .task:last-child{border-bottom:none;}
+  .task input[type=checkbox]{appearance:none;width:20px;height:20px;border:2px solid var(--cyan-dim);
+    border-radius:6px;margin-top:1px;cursor:pointer;flex-shrink:0;position:relative;transition:.15s;}
+  .task input[type=checkbox]:checked{background:var(--cyan);border-color:var(--cyan);box-shadow:var(--glow);}
+  .task input[type=checkbox]:checked::after{content:"";position:absolute;left:5px;top:1px;width:5px;
+    height:11px;border:solid #061019;border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .task .body{flex:1;min-width:0;}
+  .task .txt{font-size:15px;line-height:1.4;cursor:pointer;}
+  .task.done .txt{color:var(--muted);text-decoration:line-through;}
+  .meta{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+  .m{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:5px;
+    border:1px solid var(--line);color:var(--muted);}
+  .m.work{color:var(--cyan);border-color:var(--cyan-dim);}
+  .m.personal{color:#c9a0ff;border-color:#5d4a85;}
+  .m.hi{color:var(--red);border-color:var(--red);}
+  .m.med{color:var(--amber);border-color:var(--amber);}
+  .m.lo{color:var(--muted);}
+  .m.due{color:var(--amber);border-color:#6b5a2a;}
+  .m.due.over{color:var(--red);border-color:#6b2a2a;}
+  .m.doing{color:var(--green);border-color:var(--green);}
+  .acts{display:flex;gap:6px;flex-shrink:0;}
+  .ib{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:7px;
+    width:30px;height:30px;cursor:pointer;font-size:13px;line-height:1;}
+  .ib:hover{border-color:var(--cyan);color:var(--cyan);}
+  .ib.del:hover{border-color:var(--red);color:var(--red);}
+
+  /* edit form */
+  .eform{display:flex;gap:8px;flex-wrap:wrap;flex:1;}
+  .eform input[type=text]{flex:1 1 100%;background:#0a1420;border:1px solid var(--cyan-dim);
+    border-radius:8px;padding:9px 11px;color:var(--text);font-size:14px;}
+  .eform select,.eform input[type=date]{background:#0a1420;border:1px solid var(--line);border-radius:8px;
+    padding:8px;color:var(--text);font-size:13px;color-scheme:dark;}
+  .eform .save{background:var(--green);border:none;border-radius:8px;color:#061019;font-weight:700;
+    padding:8px 16px;cursor:pointer;}
+  .eform .cancel{background:transparent;border:1px solid var(--line);border-radius:8px;
+    color:var(--muted);padding:8px 14px;cursor:pointer;}
+
+  .empty{color:var(--muted);padding:14px 4px;font-size:14px;}
+  .toggle-done{background:transparent;border:none;color:var(--cyan);cursor:pointer;font-size:13px;padding:0 4px;}
+  footer{margin-top:30px;text-align:center;color:#4d5f78;font-size:12px;letter-spacing:1px;}
+  .tools{display:flex;gap:10px;justify-content:center;margin-top:10px;}
+  .tools button,.tools label{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;}
+  .tools button:hover,.tools label:hover{border-color:var(--cyan);color:var(--cyan);}
+
+  /* sign-in overlay + sync pill */
+  #sync-pill{font-size:12px;letter-spacing:1px;margin-top:6px;color:var(--muted);}
+  #login-ov{position:fixed;inset:0;background:rgba(4,8,14,.82);backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;z-index:50;}
+  .login-box{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:28px;width:min(360px,92vw);box-shadow:0 12px 48px rgba(0,0,0,.6);}
+  .login-box .lb-title{font-size:20px;font-weight:600;margin-bottom:4px;}
+  .login-box .lb-sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .login-box input{width:100%;background:#0a1420;border:1px solid var(--line);border-radius:8px;
+    padding:11px 12px;color:var(--text);font-size:14px;margin-bottom:10px;}
+  .login-box input:focus{border-color:var(--cyan);outline:none;}
+  #lg-err{color:var(--red);font-size:13px;min-height:18px;margin-bottom:6px;}
+  #lg-btn{width:100%;background:var(--cyan);border:none;border-radius:8px;color:#061019;
+    font-weight:700;padding:11px;cursor:pointer;font-size:15px;}
+  #lg-btn:disabled{opacity:.6;}
+  #lg-skip{width:100%;background:transparent;border:none;color:var(--muted);padding:10px 0 0;
+    cursor:pointer;font-size:13px;text-decoration:underline;}
+  #sign-out{color:#4d5f78;text-decoration:underline;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">Comprehensive Sound &middot; Task Hub</div>
+      <h1>Full Task List</h1>
+      <div class="sub" id="subline">All your tasks, synced to your private cloud database</div>
+      <div id="sync-pill">&#9679; Connecting&hellip;</div>
+    </div>
+    <a class="back-btn" href="./">&larr; Morning Brief</a>
+  </header>
+
+  <div class="stats">
+    <div class="stat"><div class="n" id="s-open">0</div><div class="k">Open</div></div>
+    <div class="stat"><div class="n red" id="s-over">0</div><div class="k">Overdue</div></div>
+    <div class="stat"><div class="n" id="s-doing">0</div><div class="k">In Progress</div></div>
+    <div class="stat"><div class="n green" id="s-done">0</div><div class="k">Done</div></div>
+  </div>
+
+  <div class="controls">
+    <div class="row1">
+      <input type="text" id="add-text" placeholder="Add a new task&hellip;">
+      <select id="add-cat"><option>Work</option><option>Personal</option></select>
+      <select id="add-pri"><option value="">Priority&hellip;</option><option>High</option><option>Medium</option><option>Low</option></select>
+      <input type="date" id="add-due">
+      <button id="add-btn">Add</button>
+    </div>
+    <div class="filters" id="filters">
+      <span class="fchip on" data-f="all">All</span>
+      <span class="fchip" data-f="work">Work</span>
+      <span class="fchip" data-f="personal">Personal</span>
+      <span class="fchip" data-f="high">High Priority</span>
+      <span class="fchip" data-f="doing">In Progress</span>
+      <input type="text" id="search" placeholder="Search&hellip;">
+    </div>
+  </div>
+
+  <div class="group"><h2><span class="dot red"></span>Overdue <span class="count" id="c-over"></span></h2>
+    <div class="glist" id="g-over"></div></div>
+  <div class="group"><h2><span class="dot"></span>Scheduled <span class="count" id="c-sched"></span></h2>
+    <div class="glist" id="g-sched"></div></div>
+  <div class="group"><h2><span class="dot"></span>Anytime <span class="count" id="c-any"></span></h2>
+    <div class="glist" id="g-any"></div></div>
+  <div class="group"><h2><span class="dot gray"></span>Backlog (older) <span class="count" id="c-back"></span></h2>
+    <div class="glist" id="g-back"></div></div>
+  <div class="group"><h2><span class="dot green"></span>Done <span class="count" id="c-done"></span>
+    <button class="toggle-done" id="toggle-done">show</button></h2>
+    <div class="glist" id="g-done" style="display:none;"></div></div>
+
+  <footer>
+    Synced with Firebase &middot; cached in this browser &middot; shared with your Morning Brief. <a id="sign-out">Sign out</a>
+    <div class="tools">
+      <button id="export">Export backup (JSON)</button>
+      <label for="import-file">Import backup</label>
+      <input type="file" id="import-file" accept=".json" style="display:none;">
+    </div>
+  </footer>
+</div>
+
+<div id="login-ov">
+  <div class="login-box">
+    <div class="lb-title">Sign in to sync</div>
+    <div class="lb-sub">Tasks sync to your private Firebase database and stay saved on this computer either way.</div>
+    <input id="lg-email" type="email" autocomplete="username" placeholder="Email">
+    <input id="lg-pw" type="password" autocomplete="current-password" placeholder="Password">
+    <div id="lg-err"></div>
+    <button id="lg-btn">Sign in</button>
+    <button id="lg-skip">Work offline for now</button>
+  </div>
+</div>
+
+<script>
+// ===== Firebase cloud sync core (identical in both pages) =====
+const CST_KEY = "cst_tasks_v1";          // local cache of the store
+const CST_AUTH = "cst_auth_v1";          // saved sign-in (refresh token)
+const FB = Object.assign({
+  apiKey: "AIzaSyD6jPGiiJdC4pjC079dH9gG0B6rlM0vBD4",
+  authUrl: "https://identitytoolkit.googleapis.com/v1",
+  tokenUrl: "https://securetoken.googleapis.com/v1",
+  dbUrl: "https://james-task-hub-default-rtdb.firebaseio.com",
+  email: ""
+}, window.CST_TEST_ENDPOINTS || {});
+
+const SEED_TASKS = [];   // hosted copy: all data lives in Firebase
+
+function normalizeStore(s){
+  if (!s || typeof s !== "object") return null;
+  const tasks = Array.isArray(s.tasks) ? s.tasks : Object.values(s.tasks || {});
+  return { tasks: tasks.filter(Boolean), seeded: s.seeded || {}, deleted: s.deleted || {} };
+}
+function cstLoadLocal(){
+  let s; try { s = normalizeStore(JSON.parse(localStorage.getItem(CST_KEY))); } catch(e){ s = null; }
+  if (!s) s = { tasks: [], seeded: {}, deleted: {} };
+  let changed = false;
+  const have = new Set(s.tasks.map(t => t.id));
+  SEED_TASKS.forEach(t => {
+    if (!s.seeded[t.id]) { s.seeded[t.id] = true; changed = true;
+      if (!have.has(t.id) && !s.deleted[t.id]) s.tasks.push(JSON.parse(JSON.stringify(t))); }
+  });
+  if (changed) localStorage.setItem(CST_KEY, JSON.stringify(s));
+  return s;
+}
+function mergeStores(a, b){          // a = cloud, b = local; newer updatedAt wins per task
+  a = normalizeStore(a); b = normalizeStore(b);
+  if (!a) return b; if (!b) return a;
+  const out = { tasks: [], seeded: Object.assign({}, a.seeded, b.seeded),
+                deleted: Object.assign({}, a.deleted, b.deleted) };
+  const by = {};
+  [].concat(a.tasks, b.tasks).forEach(t => {
+    if (out.deleted[t.id]) return;
+    const prev = by[t.id];
+    if (!prev || (t.updatedAt || "") > (prev.updatedAt || "")) by[t.id] = t;
+  });
+  out.tasks = Object.values(by);
+  return out;
+}
+
+let session = { idToken: null, uid: null, exp: 0 };
+let syncState = "offline", syncTimer = null, retryTimer = null;
+
+async function fbSignIn(email, pw){
+  const r = await fetch(FB.authUrl + "/accounts:signInWithPassword?key=" + FB.apiKey,
+    { method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ email: email, password: pw, returnSecureToken: true }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((d.error && d.error.message) || "SIGN_IN_FAILED");
+  session = { idToken: d.idToken, uid: d.localId,
+              exp: Date.now() + (parseInt(d.expiresIn || "3600", 10) - 300) * 1000 };
+  localStorage.setItem(CST_AUTH, JSON.stringify({ refreshToken: d.refreshToken, uid: d.localId, email: email }));
+  return session;
+}
+async function fbRefresh(){
+  let a; try { a = JSON.parse(localStorage.getItem(CST_AUTH)); } catch(e){ a = null; }
+  if (!a || !a.refreshToken) return null;
+  let r, d;
+  try {
+    r = await fetch(FB.tokenUrl + "/token?key=" + FB.apiKey,
+      { method: "POST", headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(a.refreshToken) });
+    d = await r.json();
+  } catch(e){ throw new Error("NETWORK"); }
+  if (!r.ok) {
+    const msg = (d && d.error && d.error.message) || "";
+    if (/TOKEN|USER_DISABLED|USER_NOT_FOUND/.test(msg)) localStorage.removeItem(CST_AUTH);
+    return null;
+  }
+  session = { idToken: d.id_token, uid: d.user_id,
+              exp: Date.now() + (parseInt(d.expires_in || "3600", 10) - 300) * 1000 };
+  a.refreshToken = d.refresh_token || a.refreshToken;
+  localStorage.setItem(CST_AUTH, JSON.stringify(a));
+  return session;
+}
+async function fbToken(){
+  if (session.idToken && Date.now() < session.exp) return session.idToken;
+  const s = await fbRefresh();
+  return s ? s.idToken : null;
+}
+function dbPath(tk){ return FB.dbUrl + "/users/" + session.uid + "/store.json?auth=" + tk; }
+async function cloudGetRoot(){
+  const tk = await fbToken(); if (!tk) return undefined;
+  const r = await fetch(FB.dbUrl + "/users/" + session.uid + ".json?auth=" + tk);
+  if (!r.ok) throw new Error("DB_" + r.status);
+  return await r.json();
+}
+async function cloudClearInbox(){
+  const tk = await fbToken(); if (!tk) return;
+  try { await fetch(FB.dbUrl + "/users/" + session.uid + "/inbox.json?auth=" + tk,
+    { method: "PUT", headers: {"Content-Type":"application/json"}, body: "null" }); } catch(e){}
+}
+async function cloudPut(s){
+  const tk = await fbToken(); if (!tk) return false;
+  const r = await fetch(dbPath(tk), { method: "PUT",
+    headers: {"Content-Type":"application/json"}, body: JSON.stringify(s) });
+  return r.ok;
+}
+
+function setSync(state){
+  syncState = state;
+  const el = document.getElementById("sync-pill"); if (!el) return;
+  const map = { synced:   ["\u25CF Synced", "#3ddc97"],
+                syncing:  ["\u25CF Syncing\u2026", "#ffce54"],
+                offline:  ["\u25CF Offline \u2014 saved locally", "#ffce54"],
+                signedout:["\u25CF Not signed in \u2014 local only", "#ff6b6b"] };
+  const m = map[state] || map.offline;
+  el.textContent = m[0]; el.style.color = m[1];
+}
+function cstSave(s){
+  localStorage.setItem(CST_KEY, JSON.stringify(s));
+  queuePush();
+}
+function queuePush(){ clearTimeout(syncTimer); syncTimer = setTimeout(pushNow, 800); }
+async function pushNow(){
+  if (!localStorage.getItem(CST_AUTH)) return;
+  setSync("syncing");
+  try {
+    const ok = await cloudPut(JSON.parse(localStorage.getItem(CST_KEY)));
+    if (ok) setSync("synced");
+    else { setSync("signedout"); cstShowLogin(); }
+  } catch(e){
+    setSync("offline");
+    clearTimeout(retryTimer); retryTimer = setTimeout(pushNow, 60000);
+  }
+}
+async function initSync(){
+  if (!localStorage.getItem(CST_AUTH)) { setSync("signedout"); cstShowLogin(); return; }
+  setSync("syncing");
+  try {
+    const tk = await fbToken();
+    if (!tk) { setSync("signedout"); cstShowLogin(); return; }
+    const root = (await cloudGetRoot()) || {};
+    const merged = mergeStores(root.store, cstLoadLocal());
+    const inbox = root.inbox || {};
+    Object.values(inbox).forEach(t => {          // absorb tasks delivered by the morning routine
+      if (t && t.id && !merged.seeded[t.id]) {
+        merged.seeded[t.id] = true;
+        if (!merged.deleted[t.id] && !merged.tasks.some(x => x.id === t.id)) merged.tasks.push(t);
+      }
+    });
+    localStorage.setItem(CST_KEY, JSON.stringify(merged));
+    store = merged;
+    await cloudPut(merged);
+    if (Object.keys(inbox).length) cloudClearInbox();
+    if (typeof renderBrief === "function") renderBrief(root.brief || null);
+    setSync("synced");
+    render();
+    if (typeof startStream === "function") startStream();
+  } catch(e){
+    setSync("offline");
+    if (typeof renderBrief === "function") renderBrief(null);
+    clearTimeout(retryTimer); retryTimer = setTimeout(initSync, 60000);
+  }
+}
+function cstShowLogin(){
+  const ov = document.getElementById("login-ov"); if (!ov) return;
+  let saved; try { saved = JSON.parse(localStorage.getItem(CST_AUTH)); } catch(e){}
+  document.getElementById("lg-email").value = (saved && saved.email) || FB.email;
+  document.getElementById("lg-err").textContent = "";
+  ov.style.display = "flex";
+}
+function cstWireLogin(){
+  const ov = document.getElementById("login-ov"); if (!ov) return;
+  const err = document.getElementById("lg-err");
+  async function go(){
+    err.textContent = "";
+    const email = document.getElementById("lg-email").value.trim();
+    const pw = document.getElementById("lg-pw").value;
+    if (!email || !pw) { err.textContent = "Enter your email and password."; return; }
+    document.getElementById("lg-btn").disabled = true;
+    try {
+      await fbSignIn(email, pw);
+      ov.style.display = "none";
+      document.getElementById("lg-pw").value = "";
+      initSync();
+    } catch(e){
+      const msgs = { EMAIL_NOT_FOUND: "No account with that email.",
+                     INVALID_PASSWORD: "Wrong password.",
+                     INVALID_LOGIN_CREDENTIALS: "Wrong email or password.",
+                     TOO_MANY_ATTEMPTS_TRY_LATER: "Too many tries \u2014 wait a minute." };
+      err.textContent = msgs[e.message] || "Couldn\u2019t sign in (" + e.message + ")";
+    } finally { document.getElementById("lg-btn").disabled = false; }
+  }
+  document.getElementById("lg-btn").addEventListener("click", go);
+  document.getElementById("lg-pw").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  document.getElementById("lg-skip").addEventListener("click", () => { ov.style.display = "none"; });
+  const so = document.getElementById("sign-out");
+  if (so) so.addEventListener("click", e => {
+    e.preventDefault();
+    localStorage.removeItem(CST_AUTH);
+    session = { idToken: null, uid: null, exp: 0 };
+    setSync("signedout"); cstShowLogin();
+  });
+}
+function cstNewId(){ return "u" + Math.random().toString(36).slice(2,9); }
+// ===== end sync core =====
+
+let store = cstLoadLocal();
+let filter = "all", search = "", editingId = null;
+const todayStr = new Date().toISOString().slice(0,10);
+
+function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function fmtDue(d){
+  if(!d) return "";
+  const dt = new Date(d + "T00:00:00");
+  return dt.toLocaleDateString([], {month:'short', day:'numeric', year: dt.getFullYear() !== new Date().getFullYear() ? 'numeric' : undefined});
+}
+function priWeight(p){ return p==="High"?0 : p==="Medium"?1 : p==="Low"?2 : 3; }
+
+function matches(t){
+  if (filter==="work" && t.cat!=="Work") return false;
+  if (filter==="personal" && t.cat!=="Personal") return false;
+  if (filter==="high" && t.pri!=="High") return false;
+  if (filter==="doing" && t.status!=="doing") return false;
+  if (search && !t.text.toLowerCase().includes(search)) return false;
+  return true;
+}
+
+function groupOf(t){
+  if (t.status==="done") return "done";
+  if (t.due && t.due < todayStr) return "over";
+  if (t.due) return "sched";
+  if ((t.created||"2026") < "2026-01-01") return "back";
+  return "any";
+}
+
+function rowHtml(t){
+  const over = t.due && t.due < todayStr && t.status!=="done";
+  return '<div class="task'+(t.status==="done"?" done":"")+'" data-id="'+t.id+'">' +
+    '<input type="checkbox" '+(t.status==="done"?"checked":"")+' title="Mark done">' +
+    '<div class="body"><div class="txt" title="Click to edit">'+esc(t.text)+'</div><div class="meta">' +
+      (t.cat ? '<span class="m '+(t.cat==="Work"?"work":"personal")+'">'+t.cat+'</span>' : '') +
+      (t.pri ? '<span class="m '+(t.pri==="High"?"hi":t.pri==="Medium"?"med":"lo")+'">'+t.pri+'</span>' : '') +
+      (t.status==="doing" ? '<span class="m doing">In progress</span>' : '') +
+      (t.due ? '<span class="m due'+(over?" over":"")+'">Due '+fmtDue(t.due)+'</span>' : '') +
+      (t.src ? '<span class="m">'+esc(t.src)+'</span>' : '') +
+    '</div></div>' +
+    '<div class="acts">' +
+      '<button class="ib prog" title="Toggle in-progress">&#9654;</button>' +
+      '<button class="ib edit" title="Edit">&#9998;</button>' +
+      '<button class="ib del" title="Delete">&#10005;</button>' +
+    '</div></div>';
+}
+
+function editHtml(t){
+  return '<div class="task" data-id="'+t.id+'"><div class="eform">' +
+    '<input type="text" class="e-text" value="'+esc(t.text)+'">' +
+    '<select class="e-cat"><option'+(t.cat==="Work"?" selected":"")+'>Work</option><option'+(t.cat==="Personal"?" selected":"")+'>Personal</option></select>' +
+    '<select class="e-pri"><option value="">No priority</option><option'+(t.pri==="High"?" selected":"")+'>High</option><option'+(t.pri==="Medium"?" selected":"")+'>Medium</option><option'+(t.pri==="Low"?" selected":"")+'>Low</option></select>' +
+    '<input type="date" class="e-due" value="'+(t.due||"")+'">' +
+    '<button class="save">Save</button><button class="cancel">Cancel</button>' +
+  '</div></div>';
+}
+
+function render(){
+  const groups = {over:[], sched:[], any:[], back:[], done:[]};
+  store.tasks.filter(matches).forEach(t => groups[groupOf(t)].push(t));
+  groups.over.sort((a,b)=> (a.due||"").localeCompare(b.due||"") || priWeight(a.pri)-priWeight(b.pri));
+  groups.sched.sort((a,b)=> (a.due||"").localeCompare(b.due||""));
+  groups.any.sort((a,b)=> priWeight(a.pri)-priWeight(b.pri) || (b.created||"").localeCompare(a.created||""));
+  groups.back.sort((a,b)=> (b.created||"").localeCompare(a.created||""));
+  groups.done.sort((a,b)=> (b.doneAt||"").localeCompare(a.doneAt||""));
+
+  [["over","g-over","c-over"],["sched","g-sched","c-sched"],["any","g-any","c-any"],
+   ["back","g-back","c-back"],["done","g-done","c-done"]].forEach(([g, listId, cId]) => {
+    const el = document.getElementById(listId);
+    const arr = groups[g];
+    document.getElementById(cId).textContent = "(" + arr.length + ")";
+    el.innerHTML = arr.length
+      ? arr.map(t => t.id===editingId ? editHtml(t) : rowHtml(t)).join("")
+      : '<div class="empty">Nothing here.</div>';
+  });
+
+  const all = store.tasks;
+  document.getElementById("s-open").textContent = all.filter(t=>t.status!=="done").length;
+  document.getElementById("s-over").textContent = all.filter(t=>t.status!=="done" && t.due && t.due < todayStr).length;
+  document.getElementById("s-doing").textContent = all.filter(t=>t.status==="doing").length;
+  document.getElementById("s-done").textContent = all.filter(t=>t.status==="done").length;
+}
+
+document.addEventListener("click", e => {
+  const row = e.target.closest(".task");
+  if (!row) return;
+  const id = row.dataset.id;
+  const t = store.tasks.find(x=>x.id===id);
+  if (!t) return;
+
+  if (e.target.matches('input[type=checkbox]')) {
+    t.status = e.target.checked ? "done" : "open";
+    t.doneAt = e.target.checked ? new Date().toISOString() : null;
+    t.updatedAt = new Date().toISOString();
+    cstSave(store); render();
+  } else if (e.target.classList.contains("del")) {
+    if (confirm("Delete this task?\n\n" + t.text)) {
+      store.tasks = store.tasks.filter(x=>x.id!==id);
+      store.deleted = store.deleted || {};
+      store.deleted[id] = new Date().toISOString();
+      cstSave(store); render();
+    }
+  } else if (e.target.classList.contains("edit") || e.target.classList.contains("txt")) {
+    editingId = id; render();
+  } else if (e.target.classList.contains("prog")) {
+    t.status = t.status==="doing" ? "open" : "doing";
+    t.updatedAt = new Date().toISOString();
+    cstSave(store); render();
+  } else if (e.target.classList.contains("save")) {
+    const f = row;
+    t.text = f.querySelector(".e-text").value.trim() || t.text;
+    t.cat = f.querySelector(".e-cat").value;
+    t.pri = f.querySelector(".e-pri").value || null;
+    t.due = f.querySelector(".e-due").value || null;
+    t.updatedAt = new Date().toISOString();
+    editingId = null; cstSave(store); render();
+  } else if (e.target.classList.contains("cancel")) {
+    editingId = null; render();
+  }
+});
+
+document.getElementById("add-btn").addEventListener("click", addTask);
+document.getElementById("add-text").addEventListener("keydown", e => { if(e.key==="Enter") addTask(); });
+function addTask(){
+  const inp = document.getElementById("add-text");
+  const v = inp.value.trim();
+  if (!v) return;
+  store.tasks.unshift({
+    id: cstNewId(), text: v,
+    cat: document.getElementById("add-cat").value,
+    pri: document.getElementById("add-pri").value || null,
+    status: "open",
+    due: document.getElementById("add-due").value || null,
+    src: null, created: todayStr, updatedAt: new Date().toISOString()
+  });
+  cstSave(store);
+  inp.value=""; document.getElementById("add-pri").value=""; document.getElementById("add-due").value="";
+  render();
+}
+
+document.getElementById("filters").addEventListener("click", e => {
+  if (!e.target.classList.contains("fchip")) return;
+  document.querySelectorAll(".fchip").forEach(c=>c.classList.remove("on"));
+  e.target.classList.add("on");
+  filter = e.target.dataset.f; render();
+});
+document.getElementById("search").addEventListener("input", e => { search = e.target.value.toLowerCase(); render(); });
+
+document.getElementById("toggle-done").addEventListener("click", e => {
+  const el = document.getElementById("g-done");
+  const show = el.style.display === "none";
+  el.style.display = show ? "" : "none";
+  e.target.textContent = show ? "hide" : "show";
+});
+
+document.getElementById("export").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify(store, null, 2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "task-backup-" + todayStr + ".json";
+  a.click();
+});
+document.getElementById("import-file").addEventListener("change", e => {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = () => {
+    try {
+      const s = JSON.parse(r.result);
+      if (s && Array.isArray(s.tasks)) { store = normalizeStore(s); cstSave(store); render(); alert("Backup imported."); }
+      else alert("That file doesn't look like a task backup.");
+    } catch(err){ alert("Couldn't read that file."); }
+  };
+  r.readAsText(f);
+});
+
+// keep in sync if Morning Brief (open in another tab) changes tasks
+window.addEventListener("storage", e => { if (e.key===CST_KEY) { store = cstLoadLocal(); render(); } });
+
+// live cross-device updates via RTDB event stream
+let es = null;
+async function startStream(){
+  const tk = await fbToken(); if (!tk || !window.EventSource) return;
+  try { if (es) es.close(); } catch(e){}
+  es = new EventSource(FB.dbUrl + "/users/" + session.uid + "/store.json?auth=" + tk);
+  const onData = ev => {
+    try {
+      const d = JSON.parse(ev.data);
+      if (!d || d.path !== "/") return;
+      const local = cstLoadLocal();
+      const merged = mergeStores(d.data, local);
+      if (JSON.stringify(merged) !== JSON.stringify(local)) {
+        localStorage.setItem(CST_KEY, JSON.stringify(merged));
+        store = merged; render(); queuePush();
+      }
+    } catch(e){}
+  };
+  es.addEventListener("put", onData);
+  es.onerror = () => { try { es.close(); } catch(e){} setTimeout(startStream, 15000); };
+}
+
+cstWireLogin();
+render();
+initSync();
+</script>
+</body>
+</html>

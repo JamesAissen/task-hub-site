@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Morning Brief</title>
+<style>
+  :root{
+    --bg:#070b12; --panel:#0e1622; --panel2:#111d2e; --line:#1d2c40;
+    --text:#dbe7f5; --muted:#7f93ac; --cyan:#39d3ff; --cyan-dim:#1c7f9e;
+    --amber:#ffce54; --green:#3ddc97; --red:#ff6b6b; --glow:0 0 18px rgba(57,211,255,.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(1200px 700px at 70% -10%, #10233a 0%, var(--bg) 55%);
+    color:var(--text);
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh; padding:26px 22px 60px;
+  }
+  a{color:var(--cyan);text-decoration:none;}
+  .wrap{max-width:1180px;margin:0 auto;}
+  header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:22px;
+    flex-wrap:wrap;gap:12px;
+  }
+  .brand{font-size:13px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
+  h1{margin:6px 0 2px;font-size:30px;font-weight:600;letter-spacing:.5px;}
+  .sub{color:var(--muted);font-size:14px;}
+  .clock{text-align:right;}
+  .clock .time{font-size:34px;font-weight:600;color:var(--cyan);text-shadow:var(--glow);font-variant-numeric:tabular-nums;}
+  .clock .zone{color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;}
+  .card{
+    background:linear-gradient(180deg,var(--panel) 0%,var(--panel2) 100%);
+    border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;
+    box-shadow:0 6px 24px rgba(0,0,0,.35);
+  }
+  .card h2{
+    margin:0 0 14px;font-size:12px;letter-spacing:3px;text-transform:uppercase;
+    color:var(--muted);font-weight:700;display:flex;align-items:center;gap:8px;
+  }
+  .card h2 .dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:var(--glow);}
+  .col-6{grid-column:span 6;} .col-4{grid-column:span 4;} .col-8{grid-column:span 8;} .col-12{grid-column:span 12;}
+  @media(max-width:820px){.col-6,.col-4,.col-8{grid-column:span 12;}}
+
+  /* Weather */
+  .wx-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .wx-town{font-size:18px;font-weight:600;}
+  .wx-state{color:var(--muted);font-size:12px;letter-spacing:2px;text-transform:uppercase;}
+  .wx-temp{font-size:44px;font-weight:600;color:var(--cyan);text-shadow:var(--glow);line-height:1;}
+  .wx-temp small{font-size:16px;color:var(--muted);}
+  .wx-cond{font-size:15px;margin:8px 0 14px;color:var(--text);}
+  .wx-stats{display:flex;gap:10px;flex-wrap:wrap;}
+  .chip{background:#0a1420;border:1px solid var(--line);border-radius:9px;padding:8px 11px;flex:1;min-width:92px;}
+  .chip .k{color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;}
+  .chip .v{font-size:16px;font-weight:600;margin-top:2px;}
+  .chip .v.lo{color:var(--amber);} .chip .v.rain{color:var(--cyan);}
+
+  /* Calendar */
+  .cal-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:22px 10px;text-align:center;color:var(--muted);}
+  .cal-empty .big{font-size:20px;color:var(--green);font-weight:600;margin-bottom:4px;}
+  .evt{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .evt:last-child{border-bottom:none;}
+  .evt .t{color:var(--cyan);font-weight:600;min-width:74px;font-variant-numeric:tabular-nums;}
+  .evt .n{flex:1;}
+
+  /* Tasks */
+  .task{display:flex;align-items:flex-start;gap:11px;padding:9px 0;border-bottom:1px solid var(--line);}
+  .task:last-child{border-bottom:none;}
+  .task input{appearance:none;width:19px;height:19px;border:2px solid var(--cyan-dim);border-radius:5px;
+    margin-top:1px;cursor:pointer;flex-shrink:0;position:relative;transition:.15s;}
+  .task input:checked{background:var(--cyan);border-color:var(--cyan);box-shadow:var(--glow);}
+  .task input:checked::after{content:"";position:absolute;left:5px;top:1px;width:5px;height:10px;
+    border:solid #061019;border-width:0 2px 2px 0;transform:rotate(45deg);}
+  .task label{cursor:pointer;font-size:15px;line-height:1.35;}
+  .task input:checked + label{color:var(--muted);text-decoration:line-through;}
+  .task .pri{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--amber);
+    border:1px solid var(--amber);border-radius:5px;padding:1px 6px;margin-left:8px;vertical-align:middle;}
+  .add-row{display:flex;gap:8px;margin-top:12px;}
+  .add-row input{flex:1;background:#0a1420;border:1px solid var(--line);border-radius:8px;
+    padding:9px 11px;color:var(--text);font-size:14px;}
+  .add-row button{background:var(--cyan);border:none;border-radius:8px;color:#061019;font-weight:700;
+    padding:0 16px;cursor:pointer;font-size:14px;}
+  .empty-note{color:var(--muted);font-size:14px;padding:8px 0;}
+  .hub-btn{display:block;text-align:center;margin-top:14px;border:1px solid var(--cyan-dim);
+    border-radius:9px;padding:10px;color:var(--cyan);font-weight:600;font-size:14px;transition:.15s;}
+  .hub-btn:hover{border-color:var(--cyan);box-shadow:var(--glow);}
+  .hub-btn #hub-count{color:var(--muted);font-weight:400;}
+  .task .m-due{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--red);
+    border:1px solid #6b2a2a;border-radius:5px;padding:1px 6px;margin-left:8px;vertical-align:middle;}
+
+  /* Inbox */
+  .mail{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .mail:last-child{border-bottom:none;}
+  .mail .tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:5px;
+    height:fit-content;font-weight:700;}
+  .tag.lead{background:rgba(61,220,151,.15);color:var(--green);border:1px solid var(--green);}
+  .tag.pay{background:rgba(255,206,84,.15);color:var(--amber);border:1px solid var(--amber);}
+  .tag.bank{background:rgba(57,211,255,.15);color:var(--cyan);border:1px solid var(--cyan);}
+  .mail .who{font-weight:600;font-size:14px;}
+  .mail .subj{color:var(--muted);font-size:13px;margin-top:2px;}
+  .inbox-clear{display:flex;flex-direction:column;align-items:center;padding:18px 10px;text-align:center;color:var(--muted);}
+  .inbox-clear .big{font-size:18px;color:var(--green);font-weight:600;margin-bottom:4px;}
+  .filtered{margin-top:12px;font-size:12px;color:#5f7189;border-top:1px dashed var(--line);padding-top:10px;}
+
+  footer{margin-top:26px;text-align:center;color:#4d5f78;font-size:12px;letter-spacing:1px;}
+  .pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);
+    margin-right:6px;animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.25;}}
+
+  /* sign-in overlay + sync pill */
+  #sync-pill{font-size:12px;letter-spacing:1px;margin-top:6px;color:var(--muted);}
+  #login-ov{position:fixed;inset:0;background:rgba(4,8,14,.82);backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;z-index:50;}
+  .login-box{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:28px;width:min(360px,92vw);box-shadow:0 12px 48px rgba(0,0,0,.6);}
+  .login-box .lb-title{font-size:20px;font-weight:600;margin-bottom:4px;}
+  .login-box .lb-sub{color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .login-box input{width:100%;background:#0a1420;border:1px solid var(--line);border-radius:8px;
+    padding:11px 12px;color:var(--text);font-size:14px;margin-bottom:10px;}
+  .login-box input:focus{border-color:var(--cyan);outline:none;}
+  #lg-err{color:var(--red);font-size:13px;min-height:18px;margin-bottom:6px;}
+  #lg-btn{width:100%;background:var(--cyan);border:none;border-radius:8px;color:#061019;
+    font-weight:700;padding:11px;cursor:pointer;font-size:15px;}
+  #lg-btn:disabled{opacity:.6;}
+  #lg-skip{width:100%;background:transparent;border:none;color:var(--muted);padding:10px 0 0;
+    cursor:pointer;font-size:13px;text-decoration:underline;}
+  #sign-out{color:#4d5f78;text-decoration:underline;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">Comprehensive Sound &middot; Morning Brief</div>
+      <h1>Good morning, James</h1>
+      <div class="sub" id="today-line">Saturday, July 25, 2026</div>
+      <div id="sync-pill">&#9679; Connecting&hellip;</div>
+    </div>
+    <div class="clock">
+      <div class="time" id="clock">--:--</div>
+      <div class="zone">Central Time</div>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- WEATHER card 1 -->
+    <div class="card col-6" id="wx0">
+      <h2><span class="dot"></span>Weather</h2>
+      <div class="wx-top">
+        <div>
+          <div class="wx-town">Clarksville</div>
+          <div class="wx-state">Iowa</div>
+        </div>
+        <div class="wx-temp">89&deg;<small>F</small></div>
+      </div>
+      <div class="wx-cond">Patchy fog before 8am, then gradual clearing to mostly sunny.</div>
+      <div class="wx-stats">
+        <div class="chip"><div class="k">Tonight Low</div><div class="v lo">72&deg;F</div></div>
+        <div class="chip"><div class="k">Wind</div><div class="v">SSW 6&ndash;9 mph</div></div>
+        <div class="chip"><div class="k">Rain</div><div class="v rain">~0%</div></div>
+      </div>
+    </div>
+
+    <!-- WEATHER card 2 -->
+    <div class="card col-6" id="wx1">
+      <h2><span class="dot"></span>Weather</h2>
+      <div class="wx-top">
+        <div>
+          <div class="wx-town">Prairie du Chien</div>
+          <div class="wx-state">Wisconsin</div>
+        </div>
+        <div class="wx-temp">78&deg;<small>F</small></div>
+      </div>
+      <div class="wx-cond">A mix of clouds and sun; light and comfortable.</div>
+      <div class="wx-stats">
+        <div class="chip"><div class="k">Tonight Low</div><div class="v lo">60&deg;F</div></div>
+        <div class="chip"><div class="k">Wind</div><div class="v">N, light</div></div>
+        <div class="chip"><div class="k">Rain</div><div class="v rain">15%</div></div>
+      </div>
+    </div>
+
+    <!-- CALENDAR -->
+    <div class="card col-4">
+      <h2><span class="dot"></span>Today&rsquo;s Calendar</h2>
+      <div id="cal-body">
+      <div class="cal-empty">
+        <div class="big">Your day is open</div>
+        <div>No events scheduled on your calendar for today.</div>
+      </div>
+      </div>
+    </div>
+
+    <!-- TASKS (quick view — full list lives in Task List.html) -->
+    <div class="card col-4">
+      <h2><span class="dot"></span>Priority To-Do</h2>
+      <div id="task-list"></div>
+      <div class="add-row">
+        <input id="task-input" type="text" placeholder="Add a task&hellip;" />
+        <button id="task-add">Add</button>
+      </div>
+      <a class="hub-btn" href="tasks.html">Open Full Task List <span id="hub-count"></span> &rarr;</a>
+    </div>
+
+    <!-- INBOX -->
+    <div class="card col-4">
+      <h2><span class="dot"></span>Inbox Highlights</h2>
+      <div id="inbox">
+        <div class="inbox-clear">
+          <div class="big">Inbox is clear</div>
+          <div>No customer leads, payments, or account alerts in the last 2 days.</div>
+        </div>
+        <div class="filtered">Filtered out promotional mail from Chico&rsquo;s, TikTok Shop, Adobe,
+        Squarespace, Staples, West Forty Meats &amp; Amazon Business.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <span class="pulse"></span>Auto-refreshes every 30 minutes &middot; Last built <span id="built">--</span> &middot; <a id="sign-out">Sign out</a>
+  </footer>
+</div>
+
+<div id="login-ov">
+  <div class="login-box">
+    <div class="lb-title">Sign in to sync</div>
+    <div class="lb-sub">Tasks sync to your private Firebase database and stay saved on this computer either way.</div>
+    <input id="lg-email" type="email" autocomplete="username" placeholder="Email">
+    <input id="lg-pw" type="password" autocomplete="current-password" placeholder="Password">
+    <div id="lg-err"></div>
+    <button id="lg-btn">Sign in</button>
+    <button id="lg-skip">Work offline for now</button>
+  </div>
+</div>
+
+<script>
+  // ---- Config ----
+  const TODAY = new Date().toLocaleDateString("sv-SE");   // local YYYY-MM-DD
+  document.getElementById("today-line").textContent =
+    new Date().toLocaleDateString([], {weekday:"long", month:"long", day:"numeric", year:"numeric"});
+
+  // ---- Live clock ----
+  function tick(){
+    const now = new Date();
+    let h = now.getHours(), m = now.getMinutes();
+    const ap = h >= 12 ? "PM" : "AM";
+    h = h % 12; if (h === 0) h = 12;
+    document.getElementById("clock").textContent =
+      h + ":" + String(m).padStart(2,"0") + " " + ap;
+  }
+  tick(); setInterval(tick, 1000);
+  document.getElementById("built").textContent =
+    new Date().toLocaleString([], {hour:'2-digit', minute:'2-digit'});
+
+// ===== Firebase cloud sync core (identical in both pages) =====
+const CST_KEY = "cst_tasks_v1";          // local cache of the store
+const CST_AUTH = "cst_auth_v1";          // saved sign-in (refresh token)
+const FB = Object.assign({
+  apiKey: "AIzaSyD6jPGiiJdC4pjC079dH9gG0B6rlM0vBD4",
+  authUrl: "https://identitytoolkit.googleapis.com/v1",
+  tokenUrl: "https://securetoken.googleapis.com/v1",
+  dbUrl: "https://james-task-hub-default-rtdb.firebaseio.com",
+  email: ""
+}, window.CST_TEST_ENDPOINTS || {});
+
+const SEED_TASKS = [];   // hosted copy: all data lives in Firebase
+
+function normalizeStore(s){
+  if (!s || typeof s !== "object") return null;
+  const tasks = Array.isArray(s.tasks) ? s.tasks : Object.values(s.tasks || {});
+  return { tasks: tasks.filter(Boolean), seeded: s.seeded || {}, deleted: s.deleted || {} };
+}
+function cstLoadLocal(){
+  let s; try { s = normalizeStore(JSON.parse(localStorage.getItem(CST_KEY))); } catch(e){ s = null; }
+  if (!s) s = { tasks: [], seeded: {}, deleted: {} };
+  let changed = false;
+  const have = new Set(s.tasks.map(t => t.id));
+  SEED_TASKS.forEach(t => {
+    if (!s.seeded[t.id]) { s.seeded[t.id] = true; changed = true;
+      if (!have.has(t.id) && !s.deleted[t.id]) s.tasks.push(JSON.parse(JSON.stringify(t))); }
+  });
+  if (changed) localStorage.setItem(CST_KEY, JSON.stringify(s));
+  return s;
+}
+function mergeStores(a, b){          // a = cloud, b = local; newer updatedAt wins per task
+  a = normalizeStore(a); b = normalizeStore(b);
+  if (!a) return b; if (!b) return a;
+  const out = { tasks: [], seeded: Object.assign({}, a.seeded, b.seeded),
+                deleted: Object.assign({}, a.deleted, b.deleted) };
+  const by = {};
+  [].concat(a.tasks, b.tasks).forEach(t => {
+    if (out.deleted[t.id]) return;
+    const prev = by[t.id];
+    if (!prev || (t.updatedAt || "") > (prev.updatedAt || "")) by[t.id] = t;
+  });
+  out.tasks = Object.values(by);
+  return out;
+}
+
+let session = { idToken: null, uid: null, exp: 0 };
+let syncState = "offline", syncTimer = null, retryTimer = null;
+
+async function fbSignIn(email, pw){
+  const r = await fetch(FB.authUrl + "/accounts:signInWithPassword?key=" + FB.apiKey,
+    { method: "POST", headers: {"Content-Type":"application/json"},
+      body: JSON.stringify({ email: email, password: pw, returnSecureToken: true }) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error((d.error && d.error.message) || "SIGN_IN_FAILED");
+  session = { idToken: d.idToken, uid: d.localId,
+              exp: Date.now() + (parseInt(d.expiresIn || "3600", 10) - 300) * 1000 };
+  localStorage.setItem(CST_AUTH, JSON.stringify({ refreshToken: d.refreshToken, uid: d.localId, email: email }));
+  return session;
+}
+async function fbRefresh(){
+  let a; try { a = JSON.parse(localStorage.getItem(CST_AUTH)); } catch(e){ a = null; }
+  if (!a || !a.refreshToken) return null;
+  let r, d;
+  try {
+    r = await fetch(FB.tokenUrl + "/token?key=" + FB.apiKey,
+      { method: "POST", headers: {"Content-Type":"application/x-www-form-urlencoded"},
+        body: "grant_type=refresh_token&refresh_token=" + encodeURIComponent(a.refreshToken) });
+    d = await r.json();
+  } catch(e){ throw new Error("NETWORK"); }
+  if (!r.ok) {
+    const msg = (d && d.error && d.error.message) || "";
+    if (/TOKEN|USER_DISABLED|USER_NOT_FOUND/.test(msg)) localStorage.removeItem(CST_AUTH);
+    return null;
+  }
+  session = { idToken: d.id_token, uid: d.user_id,
+              exp: Date.now() + (parseInt(d.expires_in || "3600", 10) - 300) * 1000 };
+  a.refreshToken = d.refresh_token || a.refreshToken;
+  localStorage.setItem(CST_AUTH, JSON.stringify(a));
+  return session;
+}
+async function fbToken(){
+  if (session.idToken && Date.now() < session.exp) return session.idToken;
+  const s = await fbRefresh();
+  return s ? s.idToken : null;
+}
+function dbPath(tk){ return FB.dbUrl + "/users/" + session.uid + "/store.json?auth=" + tk; }
+async function cloudGetRoot(){
+  const tk = await fbToken(); if (!tk) return undefined;
+  const r = await fetch(FB.dbUrl + "/users/" + session.uid + ".json?auth=" + tk);
+  if (!r.ok) throw new Error("DB_" + r.status);
+  return await r.json();
+}
+async function cloudClearInbox(){
+  const tk = await fbToken(); if (!tk) return;
+  try { await fetch(FB.dbUrl + "/users/" + session.uid + "/inbox.json?auth=" + tk,
+    { method: "PUT", headers: {"Content-Type":"application/json"}, body: "null" }); } catch(e){}
+}
+async function cloudPut(s){
+  const tk = await fbToken(); if (!tk) return false;
+  const r = await fetch(dbPath(tk), { method: "PUT",
+    headers: {"Content-Type":"application/json"}, body: JSON.stringify(s) });
+  return r.ok;
+}
+
+function setSync(state){
+  syncState = state;
+  const el = document.getElementById("sync-pill"); if (!el) return;
+  const map = { synced:   ["\u25CF Synced", "#3ddc97"],
+                syncing:  ["\u25CF Syncing\u2026", "#ffce54"],
+                offline:  ["\u25CF Offline \u2014 saved locally", "#ffce54"],
+                signedout:["\u25CF Not signed in \u2014 local only", "#ff6b6b"] };
+  const m = map[state] || map.offline;
+  el.textContent = m[0]; el.style.color = m[1];
+}
+function cstSave(s){
+  localStorage.setItem(CST_KEY, JSON.stringify(s));
+  queuePush();
+}
+function queuePush(){ clearTimeout(syncTimer); syncTimer = setTimeout(pushNow, 800); }
+async function pushNow(){
+  if (!localStorage.getItem(CST_AUTH)) return;
+  setSync("syncing");
+  try {
+    const ok = await cloudPut(JSON.parse(localStorage.getItem(CST_KEY)));
+    if (ok) setSync("synced");
+    else { setSync("signedout"); cstShowLogin(); }
+  } catch(e){
+    setSync("offline");
+    clearTimeout(retryTimer); retryTimer = setTimeout(pushNow, 60000);
+  }
+}
+async function initSync(){
+  if (!localStorage.getItem(CST_AUTH)) { setSync("signedout"); cstShowLogin(); return; }
+  setSync("syncing");
+  try {
+    const tk = await fbToken();
+    if (!tk) { setSync("signedout"); cstShowLogin(); return; }
+    const root = (await cloudGetRoot()) || {};
+    const merged = mergeStores(root.store, cstLoadLocal());
+    const inbox = root.inbox || {};
+    Object.values(inbox).forEach(t => {          // absorb tasks delivered by the morning routine
+      if (t && t.id && !merged.seeded[t.id]) {
+        merged.seeded[t.id] = true;
+        if (!merged.deleted[t.id] && !merged.tasks.some(x => x.id === t.id)) merged.tasks.push(t);
+      }
+    });
+    localStorage.setItem(CST_KEY, JSON.stringify(merged));
+    store = merged;
+    await cloudPut(merged);
+    if (Object.keys(inbox).length) cloudClearInbox();
+    if (typeof renderBrief === "function") renderBrief(root.brief || null);
+    setSync("synced");
+    render();
+    if (typeof startStream === "function") startStream();
+  } catch(e){
+    setSync("offline");
+    if (typeof renderBrief === "function") renderBrief(null);
+    clearTimeout(retryTimer); retryTimer = setTimeout(initSync, 60000);
+  }
+}
+function cstShowLogin(){
+  const ov = document.getElementById("login-ov"); if (!ov) return;
+  let saved; try { saved = JSON.parse(localStorage.getItem(CST_AUTH)); } catch(e){}
+  document.getElementById("lg-email").value = (saved && saved.email) || FB.email;
+  document.getElementById("lg-err").textContent = "";
+  ov.style.display = "flex";
+}
+function cstWireLogin(){
+  const ov = document.getElementById("login-ov"); if (!ov) return;
+  const err = document.getElementById("lg-err");
+  async function go(){
+    err.textContent = "";
+    const email = document.getElementById("lg-email").value.trim();
+    const pw = document.getElementById("lg-pw").value;
+    if (!email || !pw) { err.textContent = "Enter your email and password."; return; }
+    document.getElementById("lg-btn").disabled = true;
+    try {
+      await fbSignIn(email, pw);
+      ov.style.display = "none";
+      document.getElementById("lg-pw").value = "";
+      initSync();
+    } catch(e){
+      const msgs = { EMAIL_NOT_FOUND: "No account with that email.",
+                     INVALID_PASSWORD: "Wrong password.",
+                     INVALID_LOGIN_CREDENTIALS: "Wrong email or password.",
+                     TOO_MANY_ATTEMPTS_TRY_LATER: "Too many tries \u2014 wait a minute." };
+      err.textContent = msgs[e.message] || "Couldn\u2019t sign in (" + e.message + ")";
+    } finally { document.getElementById("lg-btn").disabled = false; }
+  }
+  document.getElementById("lg-btn").addEventListener("click", go);
+  document.getElementById("lg-pw").addEventListener("keydown", e => { if (e.key === "Enter") go(); });
+  document.getElementById("lg-skip").addEventListener("click", () => { ov.style.display = "none"; });
+  const so = document.getElementById("sign-out");
+  if (so) so.addEventListener("click", e => {
+    e.preventDefault();
+    localStorage.removeItem(CST_AUTH);
+    session = { idToken: null, uid: null, exp: 0 };
+    setSync("signedout"); cstShowLogin();
+  });
+}
+function cstNewId(){ return "u" + Math.random().toString(36).slice(2,9); }
+// ===== end sync core =====
+
+  let store = cstLoadLocal();
+  const QUICK_MAX = 7;
+
+  function quickPick(){
+    // most urgent first: overdue/due-today high→low, then in-progress, then high-priority, then newest
+    const open = store.tasks.filter(t => t.status !== "done");
+    const w = t => {
+      let s = 0;
+      if (t.src === "Inbox" && t.created === TODAY) s -= 200;
+      if (t.due && t.due <= TODAY) s -= 100;
+      if (t.status === "doing") s -= 50;
+      if (t.pri === "High") s -= 40; else if (t.pri === "Medium") s -= 15;
+      return s;
+    };
+    return open.sort((a,b) => w(a)-w(b) || (b.created||"").localeCompare(a.created||"")).slice(0, QUICK_MAX);
+  }
+
+  function render(){
+    const list = document.getElementById("task-list");
+    const open = store.tasks.filter(t => t.status !== "done");
+    const picks = quickPick();
+    document.getElementById("hub-count").textContent = "(" + open.length + " open)";
+    if (!picks.length){
+      list.innerHTML = '<div class="empty-note">All caught up! Add a task below or open the full list.</div>';
+      return;
+    }
+    list.innerHTML = "";
+    picks.forEach(t => {
+      const row = document.createElement("div");
+      row.className = "task";
+      const id = "q_" + t.id;
+      const overdue = t.due && t.due < TODAY;
+      row.innerHTML =
+        '<input type="checkbox" id="'+id+'">' +
+        '<label for="'+id+'">'+escapeHtml(t.text)+
+          (t.pri==="High"?'<span class="pri">High</span>':'')+
+          (overdue?'<span class="m-due">Overdue</span>':'')+
+        '</label>';
+      row.querySelector("input").addEventListener("change", e => {
+        t.status = e.target.checked ? "done" : "open";
+        t.doneAt = e.target.checked ? new Date().toISOString() : null;
+        t.updatedAt = new Date().toISOString();
+        cstSave(store);
+        setTimeout(render, 350);
+      });
+      list.appendChild(row);
+    });
+  }
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+  document.getElementById("task-add").addEventListener("click", addTask);
+  document.getElementById("task-input").addEventListener("keydown", e => { if(e.key==="Enter") addTask(); });
+  function addTask(){
+    const inp = document.getElementById("task-input");
+    const v = inp.value.trim();
+    if(!v) return;
+    store.tasks.unshift({id:cstNewId(), text:v, cat:"Work", pri:null, status:"open", due:null, src:null, created:TODAY, updatedAt:new Date().toISOString()});
+    cstSave(store); inp.value=""; render();
+  }
+
+  // ---- render daily brief data (weather/calendar/inbox) delivered via Firebase ----
+  const CST_BRIEF = "cst_brief_v1";
+  function renderBrief(b){
+    if (!b) { try { b = JSON.parse(localStorage.getItem(CST_BRIEF)); } catch(e){ b = null; } }
+    if (!b) return;
+    localStorage.setItem(CST_BRIEF, JSON.stringify(b));
+    (b.weather || []).slice(0, 2).forEach((w, i) => {
+      const p = document.getElementById("wx" + i); if (!p) return;
+      p.querySelector(".wx-town").textContent = w.town || "";
+      p.querySelector(".wx-state").textContent = w.state || "";
+      p.querySelector(".wx-temp").innerHTML = w.hi + "&deg;<small>F</small>";
+      p.querySelector(".wx-cond").textContent = w.cond || "";
+      const chips = p.querySelectorAll(".chip .v");
+      if (chips[0]) chips[0].innerHTML = w.lo + "&deg;F";
+      if (chips[1]) chips[1].textContent = w.wind || "";
+      if (chips[2]) chips[2].textContent = w.rain || "";
+    });
+    const cal = document.getElementById("cal-body");
+    if (cal) {
+      cal.innerHTML = (b.calendar && b.calendar.length)
+        ? b.calendar.map(ev => '<div class="evt"><div class="t">' + escapeHtml(ev.t || "") + '</div><div class="n">' + escapeHtml(ev.n || "") + '</div></div>').join("")
+        : '<div class="cal-empty"><div class="big">Your day is open</div><div>No events scheduled on your calendar for today.</div></div>';
+    }
+    const ib = document.getElementById("inbox");
+    if (ib) {
+      let h = (b.inbox && b.inbox.length)
+        ? b.inbox.map(m => '<div class="mail"><span class="tag ' + escapeHtml(m.tag || "lead") + '">' + escapeHtml(m.tag || "lead") + '</span><div><div class="who">' + escapeHtml(m.who || "") + '</div><div class="subj">' + escapeHtml(m.subj || "") + '</div></div></div>').join("")
+        : '<div class="inbox-clear"><div class="big">Inbox is clear</div><div>No customer leads, payments, or account alerts in the last 2 days.</div></div>';
+      if (b.filtered) h += '<div class="filtered">' + escapeHtml(b.filtered) + '</div>';
+      if (b.date && b.date !== TODAY) h += '<div class="filtered">Showing data from ' + escapeHtml(b.date) + ' &mdash; refreshes after the next morning run.</div>';
+      ib.innerHTML = h;
+    }
+  }
+  // stay in sync if Task List.html is open in another tab
+  window.addEventListener("storage", e => { if (e.key===CST_KEY) { store = cstLoadLocal(); render(); } });
+  cstWireLogin();
+  render();
+  renderBrief(null);   // show last-known brief instantly (offline-friendly)
+  initSync();
+
+  // ---- 30-minute heartbeat ----
+  setTimeout(() => location.reload(), 30 * 60 * 1000);
+</script>
+</body>
+</html>
