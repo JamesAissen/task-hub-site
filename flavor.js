@@ -162,21 +162,65 @@
       var orig = window.paintWx;
       var wrapped = function (el, w) {
         orig(el, w);
-        setTimeout(addCelsius, 420);
+        setTimeout(function () { applyLive(); }, 420);
       };
       wrapped.__flvWrapped = true;
       window.paintWx = wrapped;
     }
   }
 
+  /* ---------- live current temperature (Open-Meteo, no key) ---------- */
+
+  var COORDS = {
+    "Clarksville": [42.7802, -92.6681],
+    "Prairie du Chien": [43.0517, -91.1412]
+  };
+  var LIVE = {};   // town -> current temp °F
+
+  function applyLive() {
+    document.querySelectorAll(".wx-top").forEach(function (top) {
+      var townEl = top.querySelector(".wx-town");
+      var t = top.querySelector(".wx-temp");
+      if (!townEl || !t) return;
+      var town = (townEl.textContent || "").trim();
+      var live = LIVE[town];
+      if (live == null) return;
+      var shown = parseInt((t.textContent || "").replace(/[^\d-]/g, ""), 10);
+      if (shown === live) return;
+      t.innerHTML = live + "&deg;<small>F</small>";
+      t.title = "Live current temperature";
+    });
+    addCelsius();
+  }
+
+  function fetchLive() {
+    Object.keys(COORDS).forEach(function (town) {
+      var c = COORDS[town];
+      fetch("https://api.open-meteo.com/v1/forecast?latitude=" + c[0] +
+            "&longitude=" + c[1] +
+            "&current=temperature_2m&temperature_unit=fahrenheit")
+        .then(function (r) { return r.json(); })
+        .then(function (d) {
+          if (d && d.current && typeof d.current.temperature_2m === "number") {
+            LIVE[town] = Math.round(d.current.temperature_2m);
+            applyLive();
+          }
+        })
+        .catch(function () {});   // offline/API down: keep showing brief temps
+    });
+  }
+
   function enhance() {
     injectStyles();
     addCelsius();
     hookWeatherRepaints();
+    fetchLive();
+    setInterval(fetchLive, 10 * 60 * 1000);   // refresh every 10 minutes
     // retry briefly in case the brief data paints after us
     var tries = 0;
     var iv = setInterval(function () {
       addCelsius();
+      applyLive();
       hookWeatherRepaints();
       if (++tries >= 5) clearInterval(iv);
     }, 1000);
