@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 32 32" role="img" aria-label="Task Hub">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#12263e"/>
+      <stop offset="0.6" stop-color="#0b1420"/>
+      <stop offset="1" stop-color="#0a1018"/>
+    </linearGradient>
+  </defs>
+  <rect x="1" y="1" width="30" height="30" rx="8" ry="8" fill="url(#bg)" stroke="#1d2c40" stroke-width="1.25"/>
+  <!-- soft cyan glow behind the check -->
+  <path d="M8.5 16.6 L13.4 21.5 L23.8 9.8" fill="none" stroke="#39d3ff" stroke-opacity="0.28" stroke-width="6.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- checkmark -->
+  <path d="M8.5 16.6 L13.4 21.5 L23.8 9.8" fill="none" stroke="#39d3ff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
