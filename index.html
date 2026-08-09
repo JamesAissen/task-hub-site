@@ -119,6 +119,9 @@
   .chip .k{color:var(--muted);font-size:10px;letter-spacing:1.5px;text-transform:uppercase;}
   .chip .v{font-size:16px;font-weight:600;margin-top:2px;}
   .chip .v.lo{color:var(--amber);} .chip .v.rain{color:var(--cyan);}
+  .wx-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+  .wx-link{border:1px solid var(--cyan-dim);border-radius:9px;padding:7px 13px;font-size:13px;font-weight:600;color:var(--cyan);transition:.15s;}
+  .wx-link:hover{border-color:var(--cyan);box-shadow:var(--glow);}
 
   /* Calendar */
   .cal-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -226,6 +229,9 @@
         <div class="chip"><div class="k">Wind</div><div class="v">SSW 6&ndash;9 mph</div></div>
         <div class="chip"><div class="k">Rain</div><div class="v rain">~0%</div></div>
       </div>
+      <div class="wx-links">
+        <a class="wx-link" href="https://forecast.weather.gov/MapClick.php?lat=42.7802&amp;lon=-92.6681" target="_blank" rel="noopener">NWS 7-Day Forecast &rarr;</a>
+      </div>
     </div>
 
     <!-- WEATHER card 2 -->
@@ -243,6 +249,9 @@
         <div class="chip"><div class="k">Tonight Low</div><div class="v lo">60&deg;F</div></div>
         <div class="chip"><div class="k">Wind</div><div class="v">N, light</div></div>
         <div class="chip"><div class="k">Rain</div><div class="v rain">15%</div></div>
+      </div>
+      <div class="wx-links">
+        <a class="wx-link" href="https://forecast.weather.gov/MapClick.php?lat=43.0517&amp;lon=-91.1412" target="_blank" rel="noopener">NWS 7-Day Forecast &rarr;</a>
       </div>
       <div class="wx-dots" id="wx-dots"></div>
     </div>
@@ -866,6 +875,22 @@ function cstNewId(){ return "u" + Math.random().toString(36).slice(2,9); }
 
   // ---- weather panel painting + 15s cycling for the second panel ----
   let wxTimer = null;
+
+  // Coordinates for the towns the brief cycles through, so the Forecast button
+  // deep-links to the town actually on screen rather than a fixed one. A town
+  // that is not in this table falls back to the NWS town search, so an unknown
+  // town still gets a working link instead of a dead one.
+  const WX_COORDS = {
+    "clarksville":      [42.7802, -92.6681],
+    "prairie du chien": [43.0517, -91.1412]
+  };
+  function wxForecastUrl(town, state){
+    const c = WX_COORDS[String(town || "").trim().toLowerCase()];
+    if (c) return "https://forecast.weather.gov/MapClick.php?lat=" + c[0] + "&lon=" + c[1];
+    const q = [town, state].filter(Boolean).join(", ");
+    return "https://forecast.weather.gov/zipcity.php?inputstring=" + encodeURIComponent(q);
+  }
+
   function paintWx(el, w){
     if (!el || !w) return;
     el.style.opacity = "0";
@@ -874,6 +899,8 @@ function cstNewId(){ return "u" + Math.random().toString(36).slice(2,9); }
       el.querySelector(".wx-state").textContent = w.state || "";
       el.querySelector(".wx-temp").innerHTML = w.hi + "&deg;<small>F</small>";
       el.querySelector(".wx-cond").textContent = w.cond || "";
+      const lk = el.querySelector(".wx-link");
+      if (lk) lk.href = wxForecastUrl(w.town, w.state);
       const chips = el.querySelectorAll(".chip .v");
       if (chips[0]) chips[0].innerHTML = w.lo + "&deg;F";
       if (chips[1]) chips[1].textContent = w.wind || "";

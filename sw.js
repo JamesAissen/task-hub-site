@@ -1,6 +1,6 @@
 // Cache the app shell so the pages open instantly and survive a dead connection.
 // Data is never cached here — it always comes from Firebase (or localStorage).
-const SHELL = "taskhub-shell-v4";
+const SHELL = "taskhub-shell-v5";
 const FILES = ["./", "./index.html", "./tasks.html", "./orders.html",
                "./manifest.json", "./icon-192.png", "./icon-512.png",
                "./favicon.svg", "./favicon.ico",
