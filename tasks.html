@@ -28,6 +28,8 @@
   }
   a{color:var(--cyan);text-decoration:none;}
   .wrap{max-width:980px;margin:0 auto;visibility:hidden;}
+  @media(min-width:1100px){ .wrap{max-width:1400px;} }
+  @media(min-width:1700px){ .wrap{max-width:1820px;} }
   body.authed .wrap{visibility:visible;}
   header{
     display:flex;justify-content:space-between;align-items:flex-end;
@@ -81,6 +83,19 @@
   .group h2 .count{color:#4d5f78;font-weight:600;}
   .glist{background:linear-gradient(180deg,var(--panel),var(--panel2));
     border:1px solid var(--line);border-radius:14px;padding:4px 16px;}
+
+  /* side by side buckets once the screen is wide enough */
+  .cols{display:grid;grid-template-columns:1fr;gap:0 20px;align-items:start;}
+  @media(min-width:1100px){ .cols{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media(min-width:1700px){ .cols{grid-template-columns:repeat(4,minmax(0,1fr));} }
+  .group h2 .dot.purple{background:#c9a0ff;box-shadow:0 0 8px rgba(201,160,255,.45);}
+  /* drag handles for reordering the buckets */
+  .cols .group h2.draghandle{cursor:grab;user-select:none;}
+  .cols .group h2.draghandle:active{cursor:grabbing;}
+  .cols .group h2.draghandle::after{content:"\2261";color:#3a4a60;margin-left:auto;
+    font-size:14px;letter-spacing:0;padding-left:10px;}
+  .cols .group.dragging{opacity:.4;}
+  .cols .group.dropinto .glist{border-color:var(--cyan);box-shadow:var(--glow);}
 
   /* task rows */
   .task{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);}
@@ -184,12 +199,16 @@
     </div>
   </div>
 
+  <div class="cols">
   <div class="group"><h2><span class="dot red"></span>Overdue <span class="count" id="c-over"></span></h2>
     <div class="glist" id="g-over"></div></div>
   <div class="group"><h2><span class="dot"></span>Scheduled <span class="count" id="c-sched"></span></h2>
     <div class="glist" id="g-sched"></div></div>
-  <div class="group"><h2><span class="dot"></span>Anytime <span class="count" id="c-any"></span></h2>
-    <div class="glist" id="g-any"></div></div>
+  <div class="group"><h2><span class="dot"></span>Anytime &middot; Work <span class="count" id="c-anyw"></span></h2>
+    <div class="glist" id="g-anyw"></div></div>
+  <div class="group"><h2><span class="dot purple"></span>Anytime &middot; Personal <span class="count" id="c-anyp"></span></h2>
+    <div class="glist" id="g-anyp"></div></div>
+  </div>
   <div class="group"><h2><span class="dot gray"></span>Backlog (older) <span class="count" id="c-back"></span></h2>
     <div class="glist" id="g-back"></div></div>
   <div class="group"><h2><span class="dot green"></span>Done <span class="count" id="c-done"></span>
@@ -369,6 +388,7 @@ async function initSync(){
     store = merged;
     await cloudPut(merged);
     if (Object.keys(inbox).length) cloudClearInbox();
+    applyCloudOrder((root.prefs || {}).bucketOrder);
     if (typeof renderBrief === "function") renderBrief(root.brief || null);
     setSync("synced");
     render();
@@ -484,6 +504,106 @@ function editHtml(t){
   '</div></div>';
 }
 
+/* ===== Draggable bucket order, remembered and synced ===== */
+const CST_ORDER = "cst_bucket_order_v1";
+const DEFAULT_ORDER = ["over","sched","anyw","anyp"];
+const BUCKET_OF = { "g-over":"over", "g-sched":"sched", "g-anyw":"anyw", "g-anyp":"anyp" };
+
+function sanitizeOrder(o){
+  // Never trust stored order blindly. Drop unknown keys, drop duplicates, and
+  // append any bucket the stored order is missing so a bucket can never vanish.
+  if (!Array.isArray(o)) return DEFAULT_ORDER.slice();
+  const seen = {}, out = [];
+  o.forEach(k => { if (DEFAULT_ORDER.indexOf(k) > -1 && !seen[k]) { seen[k] = 1; out.push(k); } });
+  DEFAULT_ORDER.forEach(k => { if (!seen[k]) out.push(k); });
+  return out;
+}
+function loadOrder(){
+  let o = null;
+  try { o = JSON.parse(localStorage.getItem(CST_ORDER)); } catch(e){}
+  return sanitizeOrder(o);
+}
+let bucketOrder = loadOrder();
+
+function groupEl(key){
+  const list = document.getElementById("g-" + key);
+  return list ? list.closest(".group") : null;
+}
+function applyOrder(){
+  const cols = document.querySelector(".cols");
+  if (!cols) return;
+  bucketOrder.forEach(k => { const el = groupEl(k); if (el) cols.appendChild(el); });
+}
+async function cloudPutOrder(){
+  const tk = await fbToken(); if (!tk) return false;
+  const r = await fetch(FB.dbUrl + "/users/" + session.uid + "/prefs/bucketOrder.json?auth=" + tk,
+    { method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify(bucketOrder) });
+  return r.ok;
+}
+let orderTimer = null;
+function saveOrder(){
+  localStorage.setItem(CST_ORDER, JSON.stringify(bucketOrder));
+  clearTimeout(orderTimer);
+  orderTimer = setTimeout(() => { cloudPutOrder().catch(function(){}); }, 600);
+}
+function applyCloudOrder(remote){
+  if (!Array.isArray(remote)) return;
+  bucketOrder = sanitizeOrder(remote);
+  localStorage.setItem(CST_ORDER, JSON.stringify(bucketOrder));
+  applyOrder();
+}
+
+let dragKey = null;
+function clearDropMarks(){
+  document.querySelectorAll(".cols .group.dropinto").forEach(x => x.classList.remove("dropinto"));
+}
+function keyOfGroup(g){
+  const list = g.querySelector(".glist");
+  return list ? BUCKET_OF[list.id] : null;
+}
+function wireDrag(){
+  document.querySelectorAll(".cols .group").forEach(g => {
+    const h = g.querySelector("h2");
+    if (!h || h.dataset.dragWired) return;
+    h.dataset.dragWired = "1";
+    h.setAttribute("draggable", "true");
+    h.classList.add("draghandle");
+    h.setAttribute("title", "Drag to reorder");
+    h.addEventListener("dragstart", e => {
+      dragKey = keyOfGroup(g);
+      if (!dragKey) { e.preventDefault(); return; }
+      g.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try { e.dataTransfer.setData("text/plain", dragKey); } catch(err){}
+    });
+    h.addEventListener("dragend", () => { g.classList.remove("dragging"); clearDropMarks(); dragKey = null; });
+    g.addEventListener("dragover", e => {
+      if (!dragKey) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      clearDropMarks();
+      if (keyOfGroup(g) !== dragKey) g.classList.add("dropinto");
+    });
+    g.addEventListener("dragleave", () => g.classList.remove("dropinto"));
+    g.addEventListener("drop", e => {
+      if (!dragKey) return;
+      e.preventDefault();
+      const target = keyOfGroup(g);
+      clearDropMarks();
+      if (!target || target === dragKey) { dragKey = null; return; }
+      const from = bucketOrder.indexOf(dragKey), to = bucketOrder.indexOf(target);
+      if (from < 0 || to < 0) { dragKey = null; return; }
+      bucketOrder.splice(from, 1);
+      bucketOrder.splice(to, 0, dragKey);
+      dragKey = null;
+      applyOrder(); saveOrder();
+    });
+  });
+}
+function resetOrder(){
+  bucketOrder = DEFAULT_ORDER.slice();
+  applyOrder(); saveOrder();
+}
 function render(){
   const groups = {over:[], sched:[], any:[], back:[], done:[]};
   store.tasks.filter(matches).forEach(t => groups[groupOf(t)].push(t));
@@ -493,7 +613,11 @@ function render(){
   groups.back.sort((a,b)=> (b.created||"").localeCompare(a.created||""));
   groups.done.sort((a,b)=> (b.doneAt||"").localeCompare(a.doneAt||""));
 
-  [["over","g-over","c-over"],["sched","g-sched","c-sched"],["any","g-any","c-any"],
+  // Anytime is shown as two buckets. Anything not explicitly Personal counts as Work.
+  groups.anyw = groups.any.filter(t => t.cat !== "Personal");
+  groups.anyp = groups.any.filter(t => t.cat === "Personal");
+
+  [["over","g-over","c-over"],["sched","g-sched","c-sched"],["anyw","g-anyw","c-anyw"],["anyp","g-anyp","c-anyp"],
    ["back","g-back","c-back"],["done","g-done","c-done"]].forEach(([g, listId, cId]) => {
     const el = document.getElementById(listId);
     const arr = groups[g];
@@ -508,6 +632,9 @@ function render(){
   document.getElementById("s-over").textContent = all.filter(t=>t.status!=="done" && t.due && t.due < todayStr).length;
   document.getElementById("s-doing").textContent = all.filter(t=>t.status==="doing").length;
   document.getElementById("s-done").textContent = all.filter(t=>t.status==="done").length;
+
+  applyOrder();
+  wireDrag();
 }
 
 document.addEventListener("click", e => {
