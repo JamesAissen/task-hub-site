@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calendar</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#070b12">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="any">
+
+<!-- =====================================================================
+     SETUP: paste your Google OAuth Client ID between the quotes below.
+     Nothing else in this file needs changing.
+     ===================================================================== -->
+<script>
+const GOOGLE_CLIENT_ID = "563055257990-v1gnn28ucjuhve71vjk1pbjo2o9d4qbb.apps.googleusercontent.com";
+</script>
+<!-- ===================================================================== -->
+
+<style>
+  :root{
+    --bg:#070b12; --panel:#0e1622; --panel2:#111d2e; --line:#1d2c40;
+    --text:#dbe7f5; --muted:#7f93ac; --cyan:#F77E3B; --cyan-dim:#A65A30; --data:#39d3ff;
+    --amber:#ffce54; --green:#3ddc97; --red:#ff6b6b; --glow:0 0 18px rgba(242,94,13,.28);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:radial-gradient(1200px 700px at 70% -10%, #10233a 0%, var(--bg) 55%);
+    color:var(--text); font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    min-height:100vh; padding:26px 22px 80px;
+  }
+  a{color:var(--cyan);text-decoration:none;}
+  .wrap{max-width:1400px;margin:0 auto;}
+  @media(min-width:1700px){ .wrap{max-width:1720px;} }
+
+  header{display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
+  .brand{font-size:13px;letter-spacing:4px;color:var(--cyan);text-transform:uppercase;font-weight:600;}
+  h1{margin:6px 0 2px;font-size:30px;font-weight:600;letter-spacing:.5px;}
+  .sub{color:var(--muted);font-size:14px;}
+  .navrow{display:flex;gap:8px;flex-wrap:wrap;}
+  .back-btn{background:transparent;border:1px solid var(--cyan-dim);color:var(--cyan);
+    border-radius:9px;padding:9px 16px;font-size:14px;cursor:pointer;font-weight:600;}
+  .back-btn:hover{border-color:var(--cyan);box-shadow:var(--glow);}
+  .back-btn.on{background:rgba(247,126,59,.14);}
+
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+  .ctl{background:#0a1420;border:1px solid var(--line);color:var(--text);border-radius:9px;
+    padding:9px 14px;cursor:pointer;font-size:14px;font-family:inherit;}
+  .ctl:hover{border-color:var(--cyan);color:var(--cyan);}
+  .ctl.primary{background:var(--cyan);border-color:var(--cyan);color:#241004;font-weight:700;}
+  .ctl.primary:hover{background:#ff9052;color:#241004;}
+  .ctl.on{border-color:var(--cyan);color:var(--cyan);}
+  #period{font-size:21px;font-weight:600;margin:0 6px;min-width:220px;}
+  .spacer{margin-left:auto;}
+
+  .cals{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .calchip{display:flex;align-items:center;gap:7px;background:#0a1420;border:1px solid var(--line);
+    border-radius:20px;padding:6px 13px;font-size:13px;cursor:pointer;user-select:none;color:var(--muted);}
+  .calchip.on{color:var(--text);}
+  .calchip .sw{width:10px;height:10px;border-radius:3px;flex-shrink:0;opacity:.35;}
+  .calchip.on .sw{opacity:1;}
+  .calchip .ro{font-size:10px;letter-spacing:1px;color:var(--muted);border:1px solid var(--line);
+    border-radius:4px;padding:0 4px;}
+
+  /* month grid */
+  .dow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-bottom:6px;}
+  .dow div{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);padding-left:4px;}
+  .grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;}
+  .cell{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:11px;min-height:118px;padding:7px 8px;cursor:pointer;overflow:hidden;}
+  .cell:hover{border-color:var(--cyan-dim);}
+  .cell.dim{opacity:.42;}
+  .cell.today{border-color:var(--cyan);box-shadow:var(--glow);}
+  .cell .dnum{font-size:13px;color:var(--muted);margin-bottom:5px;font-variant-numeric:tabular-nums;}
+  .cell.today .dnum{color:var(--cyan);font-weight:700;}
+  .ev{display:flex;align-items:center;gap:5px;font-size:12px;line-height:1.3;padding:2px 4px;
+    border-radius:4px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ev:hover{background:rgba(255,255,255,.06);}
+  .ev .bl{width:3px;height:12px;border-radius:2px;flex-shrink:0;}
+  .ev .tm{color:var(--muted);font-variant-numeric:tabular-nums;}
+  .more{font-size:11px;color:var(--muted);padding-left:4px;}
+
+  /* agenda */
+  .agenda{display:none;}
+  .agenda.on{display:block;}
+  .aday{margin-bottom:16px;}
+  .aday h3{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin:0 0 7px 4px;}
+  .arow{display:flex;gap:12px;align-items:flex-start;background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);border-radius:10px;padding:11px 14px;margin-bottom:6px;cursor:pointer;}
+  .arow:hover{border-color:var(--cyan-dim);}
+  .arow .bl{width:3px;align-self:stretch;border-radius:2px;flex-shrink:0;}
+  .arow .when{color:var(--muted);font-size:13px;min-width:132px;font-variant-numeric:tabular-nums;}
+  .arow .what{flex:1;font-size:15px;}
+  .arow .where{color:var(--muted);font-size:12px;margin-top:2px;}
+
+  /* modal */
+  .ov{position:fixed;inset:0;background:rgba(3,6,11,.78);display:none;align-items:center;
+    justify-content:center;z-index:60;padding:20px;}
+  .ov.on{display:flex;}
+  .box{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:16px;padding:24px;width:min(560px,96vw);max-height:90vh;overflow:auto;
+    box-shadow:0 16px 60px rgba(0,0,0,.65);}
+  .box h2{margin:0 0 4px;font-size:20px;font-weight:600;}
+  .box .hint{color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .fld{margin-bottom:12px;}
+  .fld label{display:block;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;
+    color:var(--muted);margin-bottom:5px;}
+  .fld input,.fld select,.fld textarea{width:100%;background:#0a1420;border:1px solid var(--line);
+    border-radius:8px;padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;color-scheme:dark;}
+  .fld textarea{min-height:70px;resize:vertical;}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--muted);margin-bottom:12px;}
+  .chk input{width:17px;height:17px;}
+  .acts{display:flex;gap:9px;margin-top:18px;flex-wrap:wrap;}
+  .acts .spacer{margin-left:auto;}
+  .danger{border-color:#6b2a2a;color:var(--red);}
+  .danger:hover{border-color:var(--red);color:var(--red);}
+
+  .daylist{margin-bottom:16px;}
+  .daylist .none{color:var(--muted);font-size:14px;padding:8px 0;}
+
+  #gate{text-align:center;padding:70px 20px;}
+  #gate .big{font-size:22px;margin-bottom:8px;}
+  #gate p{color:var(--muted);max-width:52ch;margin:0 auto 22px;line-height:1.6;}
+  #err{color:var(--red);font-size:13px;margin-top:14px;min-height:18px;}
+  #status{font-size:12px;letter-spacing:1px;color:var(--muted);}
+  .setup{background:#0a1420;border:1px solid var(--line);border-radius:10px;padding:16px 18px;
+    text-align:left;max-width:640px;margin:20px auto 0;color:var(--muted);font-size:13px;line-height:1.7;}
+  .setup code{color:var(--cyan);font-family:Consolas,monospace;}
+  footer{margin-top:30px;text-align:center;color:#4d5f78;font-size:12px;letter-spacing:1px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div>
+      <div class="brand">Calendar</div>
+      <h1>Schedule</h1>
+      <div class="sub" id="status">Not connected</div>
+    </div>
+    <div class="navrow">
+      <a class="back-btn" href="index.html">&larr; Daily Brief</a>
+      <a class="back-btn" href="tasks.html">Task Hub</a>
+      <a class="back-btn" href="orders.html">Orders</a>
+      <a class="back-btn on" href="calendar.html">Calendar</a>
+    </div>
+  </header>
+
+  <div id="gate">
+    <div class="big">Connect your Google Calendar</div>
+    <p>This page reads and writes your calendars directly. Nothing is stored on any
+       server of mine, the connection is between your browser and Google.</p>
+    <button class="ctl primary" id="connect">Connect Google Calendar</button>
+    <div id="err"></div>
+    <div class="setup" id="setup" style="display:none;">
+      <b>One-time setup is still needed.</b><br>
+      No OAuth client ID has been set in this page yet. Open <code>calendar.html</code>,
+      find <code>GOOGLE_CLIENT_ID</code> near the top, and paste the client ID between
+      the quotes. The steps to create one are in
+      <code>Assistant\Context\Dev\calendar-setup.md</code>.
+    </div>
+  </div>
+
+  <div id="app" style="display:none;">
+    <div class="bar">
+      <button class="ctl" id="prev">&larr;</button>
+      <button class="ctl" id="today">Today</button>
+      <button class="ctl" id="next">&rarr;</button>
+      <span id="period"></span>
+      <span class="spacer"></span>
+      <button class="ctl on" id="v-month">Month</button>
+      <button class="ctl" id="v-agenda">Agenda</button>
+      <button class="ctl primary" id="newev">New event</button>
+    </div>
+
+    <div class="cals" id="cals"></div>
+
+    <div id="monthview">
+      <div class="dow"><div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div></div>
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="agenda" id="agendaview"></div>
+  </div>
+
+  <footer>Live from Google Calendar &middot; <a href="#" id="signout">Disconnect</a></footer>
+</div>
+
+<!-- day detail -->
+<div class="ov" id="dayov"><div class="box">
+  <h2 id="dtitle"></h2>
+  <div class="hint" id="dhint"></div>
+  <div class="daylist" id="dlist"></div>
+  <div class="acts">
+    <button class="ctl primary" id="dadd">Add event this day</button>
+    <span class="spacer"></span>
+    <button class="ctl" data-close>Close</button>
+  </div>
+</div></div>
+
+<!-- event editor -->
+<div class="ov" id="edov"><div class="box">
+  <h2 id="etitle">New event</h2>
+  <div class="hint" id="ehint"></div>
+  <div class="fld"><label>Title</label><input type="text" id="f-title" placeholder="What is it"></div>
+  <div class="fld"><label>Calendar</label><select id="f-cal"></select></div>
+  <div class="chk"><input type="checkbox" id="f-allday"><label for="f-allday" style="margin:0;letter-spacing:0;text-transform:none;font-size:14px;">All day</label></div>
+  <div class="two">
+    <div class="fld"><label>Starts</label><input type="datetime-local" id="f-start"></div>
+    <div class="fld"><label>Ends</label><input type="datetime-local" id="f-end"></div>
+  </div>
+  <div class="two" id="dateonly" style="display:none;">
+    <div class="fld"><label>Starts</label><input type="date" id="f-sdate"></div>
+    <div class="fld"><label>Ends</label><input type="date" id="f-edate"></div>
+  </div>
+  <div class="fld"><label>Location</label><input type="text" id="f-loc" placeholder="Optional"></div>
+  <div class="fld"><label>Notes</label><textarea id="f-desc" placeholder="Optional"></textarea></div>
+  <div id="eerr" style="color:var(--red);font-size:13px;min-height:18px;"></div>
+  <div class="acts">
+    <button class="ctl primary" id="esave">Save</button>
+    <button class="ctl danger" id="edel" style="display:none;">Delete</button>
+    <span class="spacer"></span>
+    <button class="ctl" data-close>Cancel</button>
+  </div>
+</div></div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+(function(){
+"use strict";
+
+const SCOPES = "https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events";
+const API = "https://www.googleapis.com/calendar/v3";
+const PALETTE = ["#F77E3B","#39d3ff","#3ddc97","#ffce54","#c9a0ff","#ff6b6b","#5ec8b8","#f691b2"];
+const VIS_KEY = "cal_visible_v1";
+
+let token = null, tokenClient = null, expiry = 0;
+let cals = [];                 // {id,summary,writable,color,visible}
+let events = [];               // flattened
+let cursor = new Date();       // month being shown
+let view = "month";
+let editing = null;            // {calendarId, event} or null for new
+const MOCK = new URLSearchParams(location.search).has("mock");
+
+const $ = id => document.getElementById(id);
+const esc = s => (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad = n => String(n).padStart(2,"0");
+const ymd = d => d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+function hhmm(d){
+  let h = d.getHours(), m = d.getMinutes(), ap = h >= 12 ? "pm" : "am";
+  h = h % 12; if (h === 0) h = 12;
+  return h + (m ? ":" + pad(m) : "") + ap;
+}
+
+/* ---------- auth ---------- */
+function ready(){ return token && Date.now() < expiry; }
+
+function connect(interactive){
+  if (MOCK) { loadMock(); return; }
+  if (!GOOGLE_CLIENT_ID) { $("setup").style.display = "block"; return; }
+  if (!window.google || !google.accounts || !google.accounts.oauth2) {
+    $("err").textContent = "Google's sign-in script has not loaded yet. Give it a second and try again.";
+    return;
+  }
+  if (!tokenClient) {
+    tokenClient = google.accounts.oauth2.initTokenClient({
+      client_id: GOOGLE_CLIENT_ID,
+      scope: SCOPES,
+      callback: r => {
+        if (r.error) { $("err").textContent = "Google refused the connection: " + r.error; return; }
+        token = r.access_token;
+        expiry = Date.now() + (Number(r.expires_in || 3600) - 60) * 1000;
+        $("err").textContent = "";
+        start();
+      }
+    });
+  }
+  tokenClient.requestAccessToken({ prompt: interactive ? "consent" : "" });
+}
+
+async function api(path, opts){
+  if (!ready() && !MOCK) { connect(false); throw new Error("no token"); }
+  const o = Object.assign({ headers: {} }, opts || {});
+  o.headers["Authorization"] = "Bearer " + token;
+  if (o.body) o.headers["Content-Type"] = "application/json";
+  const r = await fetch(API + path, o);
+  if (r.status === 401) { token = null; connect(true); throw new Error("expired"); }
+  if (!r.ok) {
+    let msg = r.status + "";
+    try { const j = await r.json(); if (j.error && j.error.message) msg = j.error.message; } catch(e){}
+    throw new Error(msg);
+  }
+  return r.status === 204 ? null : await r.json();
+}
+
+/* ---------- data ---------- */
+async function loadCalendars(){
+  const j = await api("/users/me/calendarList?maxResults=250&minAccessRole=reader");
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(VIS_KEY)) || {}; } catch(e){}
+  cals = (j.items || []).map((c, i) => ({
+    id: c.id,
+    summary: c.summaryOverride || c.summary,
+    writable: c.accessRole === "owner" || c.accessRole === "writer",
+    color: c.backgroundColor || PALETTE[i % PALETTE.length],
+    visible: saved[c.id] !== false
+  }));
+}
+
+function range(){
+  const first = new Date(cursor.getFullYear(), cursor.getMonth(), 1);
+  const start = new Date(first); start.setDate(1 - first.getDay());
+  const end = new Date(start); end.setDate(start.getDate() + 42);
+  return { start, end };
+}
+
+async function loadEvents(){
+  const { start, end } = range();
+  const q = "?timeMin=" + start.toISOString() + "&timeMax=" + end.toISOString() +
+            "&singleEvents=true&orderBy=startTime&maxResults=2500";
+  const out = [];
+  // Fetch every calendar, not just the visible ones. Visibility is a display
+  // filter, so toggling a chip is instant instead of triggering a refetch.
+  const jobs = cals.map(async c => {
+    try {
+      const j = await api("/calendars/" + encodeURIComponent(c.id) + "/events" + q);
+      (j.items || []).forEach(e => {
+        if (e.status === "cancelled") return;
+        const allDay = !!(e.start && e.start.date);
+        const s = allDay ? new Date(e.start.date + "T00:00:00") : new Date(e.start.dateTime);
+        let en = allDay ? new Date(e.end.date + "T00:00:00") : new Date(e.end.dateTime);
+        if (allDay) en = new Date(en.getTime() - 1);
+        out.push({ raw: e, calId: c.id, color: c.color, writable: c.writable,
+                   allDay: allDay, start: s, end: en, title: e.summary || "(no title)",
+                   loc: e.location || "" });
+      });
+    } catch(err){ /* one calendar failing must not kill the view */ }
+  });
+  await Promise.all(jobs);
+  out.sort((a,b) => a.start - b.start || (a.allDay ? -1 : 1));
+  events = out;
+}
+
+/* ---------- rendering ---------- */
+function visibleEvents(){
+  const on = {}; cals.forEach(c => on[c.id] = c.visible);
+  return events.filter(e => on[e.calId] !== false);
+}
+function eventsOn(day){
+  const d0 = new Date(day.getFullYear(), day.getMonth(), day.getDate());
+  const d1 = new Date(d0); d1.setDate(d1.getDate() + 1);
+  return visibleEvents().filter(e => e.start < d1 && e.end >= d0);
+}
+
+function renderCals(){
+  $("cals").innerHTML = cals.map(c =>
+    '<div class="calchip' + (c.visible ? ' on' : '') + '" data-cal="' + esc(c.id) + '">' +
+      '<span class="sw" style="background:' + esc(c.color) + '"></span>' +
+      esc(c.summary) +
+      (c.writable ? '' : ' <span class="ro">READ ONLY</span>') +
+    '</div>').join("");
+}
+
+function renderMonth(){
+  const { start } = range();
+  const todayStr = ymd(new Date());
+  let html = "";
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const inMonth = d.getMonth() === cursor.getMonth();
+    const list = eventsOn(d);
+    const shown = list.slice(0, 4);
+    html += '<div class="cell' + (inMonth ? '' : ' dim') + (ymd(d) === todayStr ? ' today' : '') +
+            '" data-day="' + ymd(d) + '">' +
+            '<div class="dnum">' + d.getDate() + '</div>' +
+            shown.map(e =>
+              '<div class="ev" data-ev="' + esc(e.raw.id) + '" data-cal="' + esc(e.calId) + '">' +
+              '<span class="bl" style="background:' + esc(e.color) + '"></span>' +
+              (e.allDay ? '' : '<span class="tm">' + hhmm(e.start) + '</span> ') +
+              esc(e.title) + '</div>').join("") +
+            (list.length > 4 ? '<div class="more">+' + (list.length - 4) + ' more</div>' : '') +
+            '</div>';
+  }
+  $("grid").innerHTML = html;
+}
+
+function renderAgenda(){
+  const { start, end } = range();
+  const byDay = {};
+  visibleEvents().forEach(e => {
+    const k = ymd(e.start < start ? start : e.start);
+    (byDay[k] = byDay[k] || []).push(e);
+  });
+  const keys = Object.keys(byDay).sort();
+  $("agendaview").innerHTML = keys.length ? keys.map(k => {
+    const d = new Date(k + "T00:00:00");
+    return '<div class="aday"><h3>' + d.toLocaleDateString([], {weekday:"long", month:"long", day:"numeric"}) + '</h3>' +
+      byDay[k].map(e =>
+        '<div class="arow" data-ev="' + esc(e.raw.id) + '" data-cal="' + esc(e.calId) + '">' +
+        '<span class="bl" style="background:' + esc(e.color) + '"></span>' +
+        '<span class="when">' + (e.allDay ? "All day" : hhmm(e.start) + " to " + hhmm(e.end)) + '</span>' +
+        '<span class="what">' + esc(e.title) +
+        (e.loc ? '<div class="where">' + esc(e.loc) + '</div>' : '') + '</span></div>').join("") +
+      '</div>';
+  }).join("") : '<div class="none" style="color:var(--muted);padding:20px 4px;">Nothing on the calendar this month.</div>';
+}
+
+function render(){
+  $("period").textContent = MONTHS[cursor.getMonth()] + " " + cursor.getFullYear();
+  renderCals();
+  if (view === "month") { renderMonth(); $("monthview").style.display = ""; $("agendaview").classList.remove("on"); }
+  else { renderAgenda(); $("monthview").style.display = "none"; $("agendaview").classList.add("on"); }
+}
+
+async function refresh(){
+  if (MOCK) { loadMock(); return; }
+  $("status").textContent = "Loading";
+  try { await loadEvents(); $("status").textContent = events.length + " events this view"; }
+  catch(e){ $("status").textContent = "Could not load: " + e.message; }
+  render();
+}
+
+async function start(){
+  $("gate").style.display = "none";
+  $("app").style.display = "";
+  try { await loadCalendars(); } catch(e){ $("status").textContent = "Could not list calendars: " + e.message; return; }
+  await refresh();
+}
+
+/* ---------- editor ---------- */
+function openEditor(ev, dayStr){
+  editing = ev || null;
+  const writables = cals.filter(c => c.writable);
+  $("f-cal").innerHTML = writables.map(c =>
+    '<option value="' + esc(c.id) + '">' + esc(c.summary) + '</option>').join("");
+  $("eerr").textContent = "";
+  if (ev) {
+    $("etitle").textContent = "Edit event";
+    $("ehint").textContent = ev.writable ? "" : "This calendar is a subscribed feed, so it cannot be changed here.";
+    $("f-title").value = ev.title === "(no title)" ? "" : ev.title;
+    $("f-cal").value = ev.calId;
+    $("f-allday").checked = ev.allDay;
+    $("f-loc").value = ev.loc || "";
+    $("f-desc").value = (ev.raw.description || "");
+    if (ev.allDay) {
+      $("f-sdate").value = ev.raw.start.date;
+      $("f-edate").value = ev.raw.end.date;
+    } else {
+      $("f-start").value = localInput(ev.start);
+      $("f-end").value = localInput(ev.end);
+    }
+    $("edel").style.display = ev.writable ? "" : "none";
+    $("esave").style.display = ev.writable ? "" : "none";
+  } else {
+    $("etitle").textContent = "New event";
+    $("ehint").textContent = "";
+    $("f-title").value = ""; $("f-loc").value = ""; $("f-desc").value = "";
+    $("f-allday").checked = false;
+    const base = dayStr ? new Date(dayStr + "T09:00:00") : roundNow();
+    const endd = new Date(base.getTime() + 60*60*1000);
+    $("f-start").value = localInput(base);
+    $("f-end").value = localInput(endd);
+    $("f-sdate").value = ymd(base); $("f-edate").value = ymd(base);
+    $("edel").style.display = "none"; $("esave").style.display = "";
+  }
+  toggleAllDay();
+  $("edov").classList.add("on");
+  $("f-title").focus();
+}
+function roundNow(){ const d = new Date(); d.setMinutes(d.getMinutes() > 30 ? 60 : 30, 0, 0); return d; }
+function localInput(d){ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())+"T"+pad(d.getHours())+":"+pad(d.getMinutes()); }
+function toggleAllDay(){
+  const on = $("f-allday").checked;
+  document.querySelector(".two").style.display = on ? "none" : "";
+  $("dateonly").style.display = on ? "" : "none";
+}
+
+async function save(){
+  const title = $("f-title").value.trim();
+  if (!title) { $("eerr").textContent = "Give it a title."; return; }
+  const calId = $("f-cal").value;
+  const body = { summary: title, location: $("f-loc").value.trim(), description: $("f-desc").value.trim() };
+  if ($("f-allday").checked) {
+    const s = $("f-sdate").value, e = $("f-edate").value || $("f-sdate").value;
+    if (!s) { $("eerr").textContent = "Pick a date."; return; }
+    const endEx = new Date(e + "T00:00:00"); endEx.setDate(endEx.getDate() + 1);
+    body.start = { date: s }; body.end = { date: ymd(endEx) };
+  } else {
+    const s = $("f-start").value, e = $("f-end").value;
+    if (!s || !e) { $("eerr").textContent = "Pick a start and an end."; return; }
+    if (new Date(e) <= new Date(s)) { $("eerr").textContent = "The end has to be after the start."; return; }
+    body.start = { dateTime: new Date(s).toISOString() };
+    body.end   = { dateTime: new Date(e).toISOString() };
+  }
+  $("eerr").textContent = "Saving";
+  try {
+    if (editing && editing.calId === calId) {
+      await api("/calendars/" + encodeURIComponent(calId) + "/events/" + encodeURIComponent(editing.raw.id),
+                { method: "PATCH", body: JSON.stringify(body) });
+    } else {
+      if (editing) {   // calendar changed, so move it: create then delete
+        await api("/calendars/" + encodeURIComponent(calId) + "/events", { method: "POST", body: JSON.stringify(body) });
+        await api("/calendars/" + encodeURIComponent(editing.calId) + "/events/" + encodeURIComponent(editing.raw.id), { method: "DELETE" });
+      } else {
+        await api("/calendars/" + encodeURIComponent(calId) + "/events", { method: "POST", body: JSON.stringify(body) });
+      }
+    }
+    $("edov").classList.remove("on"); $("dayov").classList.remove("on");
+    await refresh();
+  } catch(e){ $("eerr").textContent = "Google said: " + e.message; }
+}
+
+async function del(){
+  if (!editing) return;
+  $("eerr").textContent = "Deleting";
+  try {
+    await api("/calendars/" + encodeURIComponent(editing.calId) + "/events/" + encodeURIComponent(editing.raw.id),
+              { method: "DELETE" });
+    $("edov").classList.remove("on"); $("dayov").classList.remove("on");
+    await refresh();
+  } catch(e){ $("eerr").textContent = "Google said: " + e.message; }
+}
+
+function openDay(dayStr){
+  const d = new Date(dayStr + "T00:00:00");
+  const list = eventsOn(d);
+  $("dtitle").textContent = d.toLocaleDateString([], {weekday:"long", month:"long", day:"numeric", year:"numeric"});
+  $("dhint").textContent = list.length ? list.length + (list.length === 1 ? " event" : " events") : "Nothing scheduled";
+  $("dlist").innerHTML = list.length ? list.map(e =>
+    '<div class="arow" data-ev="' + esc(e.raw.id) + '" data-cal="' + esc(e.calId) + '">' +
+    '<span class="bl" style="background:' + esc(e.color) + '"></span>' +
+    '<span class="when">' + (e.allDay ? "All day" : hhmm(e.start) + " to " + hhmm(e.end)) + '</span>' +
+    '<span class="what">' + esc(e.title) +
+    (e.loc ? '<div class="where">' + esc(e.loc) + '</div>' : '') + '</span></div>').join("")
+    : '<div class="none">Nothing on this day.</div>';
+  $("dayov").dataset.day = dayStr;
+  $("dayov").classList.add("on");
+}
+
+function findEvent(evId, calId){
+  return events.find(e => e.raw.id === evId && e.calId === calId);
+}
+
+/* ---------- wiring ---------- */
+$("connect").addEventListener("click", () => connect(true));
+$("prev").addEventListener("click", () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth()-1, 1); refresh(); });
+$("next").addEventListener("click", () => { cursor = new Date(cursor.getFullYear(), cursor.getMonth()+1, 1); refresh(); });
+$("today").addEventListener("click", () => { cursor = new Date(); refresh(); });
+$("v-month").addEventListener("click", () => { view="month"; $("v-month").classList.add("on"); $("v-agenda").classList.remove("on"); render(); });
+$("v-agenda").addEventListener("click", () => { view="agenda"; $("v-agenda").classList.add("on"); $("v-month").classList.remove("on"); render(); });
+$("newev").addEventListener("click", () => openEditor(null, null));
+$("dadd").addEventListener("click", () => openEditor(null, $("dayov").dataset.day));
+$("f-allday").addEventListener("change", toggleAllDay);
+$("esave").addEventListener("click", save);
+$("edel").addEventListener("click", del);
+$("signout").addEventListener("click", e => {
+  e.preventDefault();
+  if (token && window.google && google.accounts) { try { google.accounts.oauth2.revoke(token); } catch(err){} }
+  token = null; expiry = 0;
+  $("app").style.display = "none"; $("gate").style.display = "";
+  $("status").textContent = "Not connected";
+});
+
+document.addEventListener("click", e => {
+  if (e.target.matches("[data-close]")) {
+    e.target.closest(".ov").classList.remove("on");
+    return;
+  }
+  const chip = e.target.closest(".calchip");
+  if (chip) {
+    const c = cals.find(x => x.id === chip.dataset.cal);
+    if (c) {
+      c.visible = !c.visible;
+      const m = {}; cals.forEach(x => m[x.id] = x.visible);
+      try { localStorage.setItem(VIS_KEY, JSON.stringify(m)); } catch(err){}
+      render();
+    }
+    return;
+  }
+  const row = e.target.closest("[data-ev]");
+  if (row) {
+    e.stopPropagation();
+    const ev = findEvent(row.dataset.ev, row.dataset.cal);
+    if (ev) openEditor(ev, null);
+    return;
+  }
+  const cell = e.target.closest(".cell");
+  if (cell) openDay(cell.dataset.day);
+});
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") document.querySelectorAll(".ov.on").forEach(o => o.classList.remove("on"));
+});
+
+/* ---------- mock mode, for checking the layout without Google ---------- */
+function loadMock(){
+  cals = [
+    {id:"personal", summary:"ja_musicnmore@outlook.com", writable:true,  color:"#F77E3B", visible:true},
+    {id:"family",   summary:"Aissen Family Calendar",    writable:true,  color:"#39d3ff", visible:true},
+    {id:"css",      summary:"Comprehensive Sound Services - Private", writable:true, color:"#3ddc97", visible:true},
+    {id:"piano",    summary:"Piano Lesson Calendar (Dr. Reuter)", writable:true, color:"#c9a0ff", visible:true},
+    {id:"church",   summary:"Grace Baptist Church",      writable:false, color:"#ffce54", visible:true},
+    {id:"hol",      summary:"Holidays in United States", writable:false, color:"#ff6b6b", visible:true}
+  ];
+  const y = cursor.getFullYear(), m = cursor.getMonth();
+  const mk = (cal, day, h, len, title, loc, allDay) => {
+    const s = new Date(y, m, day, h || 0, 0, 0);
+    const e = allDay ? new Date(y, m, day, 23, 59, 59) : new Date(s.getTime() + (len||1)*3600000);
+    const c = cals.find(x => x.id === cal);
+    return { raw:{id:cal+day+h, description:""}, calId:cal, color:c.color, writable:c.writable,
+             allDay:!!allDay, start:s, end:e, title:title, loc:loc||"" };
+  };
+  events = [
+    mk("css", 4, 18, 4, "All-State Jazz recording", "Ames, IA"),
+    mk("css", 6, 9, 3, "MCHS Follies load in", "Mason City"),
+    mk("css", 6, 19, 3, "MCHS Follies performance", "Mason City"),
+    mk("piano", 7, 16, 1, "Lesson with Dr. Reuter", "Cedar Falls"),
+    mk("family", 9, 0, 0, "Mike's birthday", "", true),
+    mk("church", 9, 10, 2, "Sunday service", "Grace Baptist"),
+    mk("personal", 10, 15, 1, "Empty the dehumidifier"),
+    mk("css", 12, 13, 5, "Wartburg choir CD duplication"),
+    mk("piano", 14, 16, 1, "Lesson with Dr. Reuter", "Cedar Falls"),
+    mk("family", 15, 17, 3, "Family supper", "Clarksville"),
+    mk("css", 18, 8, 9, "Iowa All-State setup day", "Ames, IA"),
+    mk("css", 19, 8, 10, "Iowa All-State festival", "Ames, IA"),
+    mk("hol", 20, 0, 0, "Some holiday", "", true),
+    mk("personal", 21, 11, 1, "Veridian appointment", "Waverly branch"),
+    mk("piano", 21, 16, 1, "Lesson with Dr. Reuter", "Cedar Falls"),
+    mk("css", 24, 19, 3, "Summer musical Blu-ray master due"),
+    mk("family", 26, 18, 2, "Dance recital", "Waverly"),
+    mk("personal", 26, 9, 1, "Dentist"),
+    mk("css", 26, 13, 2, "Quote follow up, ICDA"),
+    mk("css", 26, 16, 1, "Backes invoice print")
+  ];
+  events.sort((a,b) => a.start - b.start || (a.allDay ? -1 : 1));
+  $("gate").style.display = "none";
+  $("app").style.display = "";
+  $("status").textContent = "Mock data, no Google connection";
+  render();
+}
+
+if (MOCK) { loadMock(); }
+else if (!GOOGLE_CLIENT_ID) { $("setup").style.display = "block"; }
+else { window.addEventListener("load", () => setTimeout(() => connect(false), 400)); }
+
+})();
+</script>
+</body>
+</html>
