@@ -67,6 +67,9 @@
   .row1 button{background:var(--cyan);border:none;border-radius:8px;color:#061019;font-weight:700;
     padding:10px 20px;cursor:pointer;font-size:14px;}
   .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+  /* arriving from the home-screen shortcut: make it obvious where to type */
+  @keyframes addflash{0%{box-shadow:0 0 0 0 rgba(247,126,59,.55);}100%{box-shadow:0 0 0 14px rgba(247,126,59,0);}}
+  .row1 input#add-text.flash{border-color:var(--cyan);animation:addflash 1s ease-out 2;}
   .fchip{background:#0a1420;border:1px solid var(--line);color:var(--muted);border-radius:20px;
     padding:6px 14px;font-size:13px;cursor:pointer;user-select:none;}
   .fchip.on{border-color:var(--cyan);color:var(--cyan);box-shadow:var(--glow);}
@@ -677,6 +680,27 @@ document.addEventListener("click", e => {
 
 document.getElementById("add-btn").addEventListener("click", addTask);
 document.getElementById("add-text").addEventListener("keydown", e => { if(e.key==="Enter") addTask(); });
+
+// Deep link. tasks.html#add lands with the new-task field focused. Both the
+// home-screen shortcut and the manifest shortcut point at that.
+function openAddField(tries){
+  const wants = location.hash === "#add" || new URLSearchParams(location.search).has("add");
+  if (!wants) return;
+  const el = document.getElementById("add-text");
+  // The page keeps .wrap hidden until sign-in finishes, and focusing a hidden
+  // field does nothing. Wait for it, up to about ten seconds, then give up.
+  if (!el || !document.body.classList.contains("authed")) {
+    const n = tries || 0;
+    if (n < 40) setTimeout(() => openAddField(n + 1), 250);
+    return;
+  }
+  try { el.scrollIntoView({ block: "center", behavior: "smooth" }); } catch(e){ el.scrollIntoView(); }
+  el.classList.add("flash");
+  setTimeout(() => { try { el.focus({ preventScroll: true }); } catch(e){ el.focus(); } }, 180);
+  setTimeout(() => el.classList.remove("flash"), 2200);
+}
+window.addEventListener("load", function(){ openAddField(0); });
+window.addEventListener("hashchange", function(){ openAddField(0); });
 function addTask(){
   const inp = document.getElementById("add-text");
   const v = inp.value.trim();
