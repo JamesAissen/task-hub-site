@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Orders</title>
+<title>Knowledge Base</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#070b12">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -38,54 +38,55 @@
   .stats{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px;}
   .stat{flex:1;min-width:130px;background:linear-gradient(180deg,var(--panel),var(--panel2));
     border:1px solid var(--line);border-radius:12px;padding:12px 14px;}
-  .stat .n{font-size:26px;font-weight:700;color:var(--cyan);text-shadow:var(--glow);}
-  .stat .n.amber{color:var(--amber);} .stat .n.green{color:var(--green);}
+  .stat .n{font-size:26px;font-weight:700;color:var(--data);}
   .stat .k{color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
 
   .addbox{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
-    border-radius:14px;padding:14px;margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;}
+    border-radius:14px;padding:14px;margin-bottom:14px;display:flex;gap:10px;flex-wrap:wrap;}
   .addbox input{background:#0a1420;border:1px solid var(--line);border-radius:8px;padding:10px 12px;
-    color:var(--text);font-size:14px;}
-  .addbox input.cust{flex:1;min-width:150px;} .addbox input.item{flex:2;min-width:200px;}
-  .addbox input.qty{width:70px;}
+    color:var(--text);font-size:14px;font-family:inherit;}
+  .addbox input.title{flex:2;min-width:190px;}
+  .addbox input.url{flex:3;min-width:240px;}
+  .addbox input.tag{flex:1;min-width:130px;}
   .addbox button{background:var(--cyan);border:none;border-radius:8px;color:#061019;font-weight:700;
     padding:10px 20px;cursor:pointer;font-size:14px;}
 
-  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
-  @media(max-width:900px){.board{grid-template-columns:1fr;}}
-  .col h2{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:var(--muted);
-    font-weight:700;margin:0 0 8px 4px;display:flex;align-items:center;gap:8px;}
-  .col h2 .dot{width:7px;height:7px;border-radius:50%;}
-  .dot.ordered{background:var(--amber);} .dot.ready{background:var(--cyan);box-shadow:var(--glow);}
-  .dot.shipped{background:var(--green);}
-  .col h2 .count{color:#4d5f78;}
-  .lane{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
-    border-radius:14px;padding:12px;min-height:90px;}
-  .ord{background:#0a1420;border:1px solid var(--line);border-radius:11px;padding:12px;margin-bottom:10px;}
-  .ord:last-child{margin-bottom:0;}
-  .ord .cust{font-weight:600;font-size:15px;}
-  .ord .item{color:var(--muted);font-size:13px;margin-top:2px;}
-  .ord .notes{color:#5f7189;font-size:12px;margin-top:6px;font-style:italic;}
-  .ord .row{display:flex;gap:6px;align-items:center;margin-top:9px;flex-wrap:wrap;}
-  .badge{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:5px;
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;align-items:center;}
+  #q{flex:1;min-width:200px;background:#0a1420;border:1px solid var(--line);border-radius:8px;
+    padding:10px 12px;color:var(--text);font-size:14px;font-family:inherit;}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;}
+  .chip{border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:12px;
+    color:var(--muted);cursor:pointer;background:transparent;font-family:inherit;}
+  .chip:hover{border-color:var(--cyan);color:var(--cyan);}
+  .chip.on{border-color:var(--cyan);color:var(--cyan);background:rgba(247,126,59,.14);}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+  @media(max-width:900px){.grid{grid-template-columns:1fr;}}
+  .kb{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);
+    border-radius:13px;padding:14px;}
+  .kb .t{font-size:16px;font-weight:600;line-height:1.3;}
+  .kb .t a{color:var(--text);}
+  .kb .t a:hover{color:var(--cyan);}
+  .kb .host{color:var(--data);font-size:12px;margin-top:3px;word-break:break-all;}
+  .kb .note{color:var(--muted);font-size:13px;margin-top:8px;line-height:1.5;white-space:pre-wrap;}
+  .kb .row{display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap;}
+  .tag{font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:5px;
     border:1px solid var(--line);color:var(--muted);cursor:pointer;}
-  .badge.paid{color:var(--green);border-color:var(--green);}
-  .badge.unpaid{color:var(--amber);border-color:var(--amber);}
-  .badge.age{cursor:default;}
-  .badge.age.old{color:var(--red);border-color:#6b2a2a;}
+  .tag:hover{border-color:var(--cyan);color:var(--cyan);}
   .mv{margin-left:auto;display:flex;gap:6px;}
   .mv button{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:7px;
-    width:30px;height:28px;cursor:pointer;font-size:13px;line-height:1;}
+    width:30px;height:28px;cursor:pointer;font-size:13px;line-height:1;font-family:inherit;}
   .mv button:hover{border-color:var(--cyan);color:var(--cyan);}
   .mv button.del:hover{border-color:var(--red);color:var(--red);}
-  .empty{color:#4d5f78;font-size:13px;padding:10px 4px;}
+  .empty{color:#4d5f78;font-size:13px;padding:14px 4px;grid-column:1/-1;}
   .eform input,.eform textarea{width:100%;background:#08111c;border:1px solid var(--cyan-dim);
     border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;margin-bottom:7px;font-family:inherit;}
+  .eform textarea{min-height:76px;resize:vertical;}
   .eform .btns{display:flex;gap:7px;}
   .eform .save{background:var(--green);border:none;border-radius:8px;color:#061019;font-weight:700;
-    padding:7px 14px;cursor:pointer;}
+    padding:7px 14px;cursor:pointer;font-family:inherit;}
   .eform .cancel{background:transparent;border:1px solid var(--line);border-radius:8px;color:var(--muted);
-    padding:7px 12px;cursor:pointer;}
+    padding:7px 12px;cursor:pointer;font-family:inherit;}
   footer{margin-top:28px;text-align:center;color:#4d5f78;font-size:12px;letter-spacing:1px;}
   #sign-out{color:#4d5f78;text-decoration:underline;cursor:pointer;}
 
@@ -105,42 +106,38 @@
 <div class="wrap">
   <header>
     <div>
-      <div class="brand">Orders</div>
-      <h1>Disc &amp; Media Orders</h1>
+      <div class="brand">Knowledge Base</div>
+      <h1>References &amp; How-To</h1>
       <div id="sync-pill">&#9679; Connecting&hellip;</div>
     </div>
     <div class="nav">
       <a href="./">Daily Brief</a>
       <a href="tasks.html">Task Hub</a>
-      <a class="on" href="#">Orders</a>
+      <a href="orders.html">Orders</a>
       <a href="calendar.html">Calendar</a>
-      <a href="roadmap.html">Roadmap</a>
-      <a href="kb.html">Knowledge</a>
+      <a class="on" href="#">Knowledge</a>
     </div>
   </header>
 
   <div class="stats">
-    <div class="stat"><div class="n" id="s-open">0</div><div class="k">In progress</div></div>
-    <div class="stat"><div class="n amber" id="s-unpaid">0</div><div class="k">Unpaid</div></div>
-    <div class="stat"><div class="n" id="s-wait">0</div><div class="k">Oldest (days)</div></div>
-    <div class="stat"><div class="n green" id="s-ship">0</div><div class="k">Shipped</div></div>
+    <div class="stat"><div class="n" id="s-total">0</div><div class="k">Entries</div></div>
+    <div class="stat"><div class="n" id="s-tags">0</div><div class="k">Tags</div></div>
+    <div class="stat"><div class="n" id="s-shown">0</div><div class="k">Showing</div></div>
   </div>
 
   <div class="addbox">
-    <input class="cust" id="a-cust" placeholder="Customer&hellip;">
-    <input class="item" id="a-item" placeholder="What they ordered&hellip;">
-    <input class="qty" id="a-qty" type="number" min="1" value="1">
-    <button id="a-btn">Add order</button>
+    <input class="title" id="a-title" placeholder="Title&hellip;">
+    <input class="url" id="a-url" placeholder="https://&hellip;">
+    <input class="tag" id="a-tag" placeholder="Tag, e.g. recording">
+    <button id="a-btn">Add reference</button>
   </div>
 
-  <div class="board">
-    <div class="col"><h2><span class="dot ordered"></span>Ordered <span class="count" id="c-ordered"></span></h2>
-      <div class="lane" id="l-ordered"></div></div>
-    <div class="col"><h2><span class="dot ready"></span>Ready to ship <span class="count" id="c-ready"></span></h2>
-      <div class="lane" id="l-ready"></div></div>
-    <div class="col"><h2><span class="dot shipped"></span>Shipped <span class="count" id="c-shipped"></span></h2>
-      <div class="lane" id="l-shipped"></div></div>
+  <div class="toolbar">
+    <input id="q" placeholder="Search title, note, tag or address&hellip;">
+    <div class="chips" id="chips"></div>
   </div>
+
+  <div class="grid" id="grid"></div>
 
   <footer>Synced with your private database &middot; <a id="sign-out">Sign out</a></footer>
 </div>
@@ -148,7 +145,7 @@
 <div id="login-ov">
   <div class="login-box">
     <div class="lb-title">Sign in</div>
-    <div class="lb-sub">Your orders live in your private cloud database. Sign in to view them.</div>
+    <div class="lb-sub">Your knowledge base lives in your private cloud database. Sign in to view it.</div>
     <input id="lg-email" type="email" autocomplete="username" placeholder="Email">
     <input id="lg-pw" type="password" autocomplete="current-password" placeholder="Password">
     <div id="lg-err"></div>
@@ -157,7 +154,7 @@
 </div>
 
 <script>
-const OKEY = "cst_orders_v1";
+const KKEY = "cst_kb_v1";
 const CST_AUTH = "cst_auth_v1";
 const FB = Object.assign({
   apiKey: "AIzaSyD6jPGiiJdC4pjC079dH9gG0B6rlM0vBD4",
@@ -167,9 +164,42 @@ const FB = Object.assign({
   email: ""
 }, window.CST_TEST_ENDPOINTS || {});
 
-const SEED_ORDERS = [];
+// Seeds are added once each, tracked by id, so deleting one does not bring it back.
+const SEED_KB = [
+  { id: "kb-dpa-stereo",
+    title: "DPA: stereo recording techniques and setups",
+    url: "https://www.dpamicrophones.com/mic-university/audio-production/stereo-recording-techniques-and-setups/",
+    tags: ["recording"],
+    note: "AB, XY, MS, Blumlein and the near-coincident family with real numbers.\nORTF 17 cm at 110 deg. DIN 20 cm at 90 deg. NOS 30 cm at 90 deg.\nXY typically 90 deg total. Blumlein figure-of-eights at 90 deg, about a 70 deg stage.\nAB spacing is set by the recording angle you want, e.g. 40 cm for about 140 deg.",
+    created: "2026-10-03" },
+  { id: "kb-companion",
+    title: "Bitfocus Companion",
+    url: "https://bitfocus.io/companion",
+    tags: ["video", "control", "gear"],
+    note: [
+      "Turns a Stream Deck into a control surface for live production. Free and open source.",
+      "Modules for ATEM switchers, OBS, QLab, PTZ cameras and a lot of mixers.",
+      "Worth it because the Stream Deck XL is already here: one button to cut cameras,",
+      "roll the recorder, fire playback.",
+      "Came up in the comments on a Michael Leckrone touring workflow post."
+    ].join(String.fromCharCode(10)),
+    created: "2026-10-03" },
+  { id: "kb-piano-tuning",
+    title: "Piano tuning: pin setting and treble technique",
+    url: "https://my.ptg.org/blogs/fred-sturm/2016/10/28/tuning-hammer-technique",
+    tags: ["piano", "tuning", "reference"],
+    note: [
+      "Hammer at 12 o clock, handle away, so uncontrolled flagpoling is at right angles to pin movement.",
+      "Jerking impulses beat steady pressure. Approach from below. Flex and turn together so pitch tracks rotation.",
+      "Grands flex toward the strings going sharp, uprights reverse it.",
+      "Hard test blow decides whether a tuning holds. The app cannot see torsion in an unset pin.",
+      "Bass: C1 wants 15 to 20 cents flat on a short upright. That is stretch. Trust the beat over the meter.",
+      "Treble: one tick can move 100 cents, so flex rather than turn for small moves, and tune to the octave below.",
+      "Full working version in Assistant Context Business piano-tuning-field-sheet.md."
+    ].join(String.fromCharCode(10)),
+    created: "2026-10-04" }
+];
 
-const STAGES = ["ordered", "ready", "shipped"];
 const todayStr = new Date().toLocaleDateString("sv-SE");
 
 function norm(s){
@@ -178,15 +208,15 @@ function norm(s){
   return { items: items.filter(Boolean), seeded: s.seeded || {}, deleted: s.deleted || {} };
 }
 function loadLocal(){
-  let s; try { s = norm(JSON.parse(localStorage.getItem(OKEY))); } catch(e){ s = null; }
+  let s; try { s = norm(JSON.parse(localStorage.getItem(KKEY))); } catch(e){ s = null; }
   if (!s) s = { items: [], seeded: {}, deleted: {} };
   let changed = false;
   const have = new Set(s.items.map(o => o.id));
-  SEED_ORDERS.forEach(o => {
+  SEED_KB.forEach(o => {
     if (!s.seeded[o.id]) { s.seeded[o.id] = true; changed = true;
       if (!have.has(o.id) && !s.deleted[o.id]) s.items.push(JSON.parse(JSON.stringify(o))); }
   });
-  if (changed) localStorage.setItem(OKEY, JSON.stringify(s));
+  if (changed) localStorage.setItem(KKEY, JSON.stringify(s));
   return s;
 }
 function merge(a, b){
@@ -241,13 +271,13 @@ async function fbToken(){
 }
 async function cloudGet(){
   const tk = await fbToken(); if (!tk) return undefined;
-  const r = await fetch(FB.dbUrl + "/users/" + session.uid + "/orders.json?auth=" + tk);
+  const r = await fetch(FB.dbUrl + "/users/" + session.uid + "/kb.json?auth=" + tk);
   if (!r.ok) throw new Error("DB_" + r.status);
   return await r.json();
 }
 async function cloudPut(s){
   const tk = await fbToken(); if (!tk) return false;
-  const r = await fetch(FB.dbUrl + "/users/" + session.uid + "/orders.json?auth=" + tk,
+  const r = await fetch(FB.dbUrl + "/users/" + session.uid + "/kb.json?auth=" + tk,
     { method:"PUT", headers:{"Content-Type":"application/json"}, body: JSON.stringify(s) });
   return r.ok;
 }
@@ -258,11 +288,11 @@ function setSync(state){
                 signedout:["● Not signed in","#ff6b6b"] };
   const m = map[state] || map.offline; el.textContent = m[0]; el.style.color = m[1];
 }
-function save(){ localStorage.setItem(OKEY, JSON.stringify(store)); clearTimeout(syncTimer); syncTimer = setTimeout(push, 800); }
+function save(){ localStorage.setItem(KKEY, JSON.stringify(store)); clearTimeout(syncTimer); syncTimer = setTimeout(push, 800); }
 async function push(){
   if (!localStorage.getItem(CST_AUTH)) return;
   setSync("syncing");
-  try { const ok = await cloudPut(JSON.parse(localStorage.getItem(OKEY)));
+  try { const ok = await cloudPut(JSON.parse(localStorage.getItem(KKEY)));
     setSync(ok ? "synced" : "signedout"); if (!ok) showLogin();
   } catch(e){ setSync("offline"); clearTimeout(retryTimer); retryTimer = setTimeout(push, 60000); }
 }
@@ -274,7 +304,7 @@ async function initSync(){
     const tk = await fbToken();
     if (!tk) { document.body.classList.remove("authed"); setSync("signedout"); showLogin(); return; }
     const merged = merge(await cloudGet(), loadLocal());
-    localStorage.setItem(OKEY, JSON.stringify(merged));
+    localStorage.setItem(KKEY, JSON.stringify(merged));
     store = merged;
     await cloudPut(merged);
     setSync("synced"); render();
@@ -308,95 +338,134 @@ function wireLogin(){
   document.getElementById("sign-out").addEventListener("click", e => {
     e.preventDefault();
     if (!confirm("Sign out and remove this data from this browser? It stays safe in your cloud database.")) return;
-    localStorage.removeItem(CST_AUTH); localStorage.removeItem(OKEY);
+    localStorage.removeItem(CST_AUTH); localStorage.removeItem(KKEY);
     session = { idToken:null, uid:null, exp:0 }; store = { items:[], seeded:{}, deleted:{} };
     document.body.classList.remove("authed"); setSync("signedout"); render(); showLogin();
   });
 }
 
-let store = loadLocal(), editing = null;
+let store = loadLocal(), editing = null, filterTag = "", query = "";
 function esc(s){ return (s||"").replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function ageDays(o){
-  const d = o.created || todayStr;
-  return Math.max(0, Math.round((new Date(todayStr) - new Date(d)) / 864e5));
+
+// Only ever emit http(s) hrefs. An entry could otherwise carry a javascript: URL.
+function safeUrl(u){
+  try { const p = new URL(u); return (p.protocol === "http:" || p.protocol === "https:") ? p.href : ""; }
+  catch(e){ return ""; }
 }
+function hostOf(u){ try { return new URL(u).hostname.replace(/^www\./, ""); } catch(e){ return ""; } }
+function tagsOf(o){ return Array.isArray(o.tags) ? o.tags : (o.tags ? String(o.tags).split(",") : []); }
+function cleanTags(s){
+  return String(s || "").split(",").map(t => t.trim().toLowerCase()).filter(Boolean).slice(0, 6);
+}
+
 function card(o){
-  const age = ageDays(o), stale = o.stage !== "shipped" && age > 7;
-  return '<div class="ord" data-id="' + o.id + '">' +
-    '<div class="cust">' + esc(o.cust) + (o.qty > 1 ? ' <span class="badge age">x' + o.qty + '</span>' : '') + '</div>' +
-    '<div class="item">' + esc(o.item) + '</div>' +
-    (o.notes ? '<div class="notes">' + esc(o.notes) + '</div>' : '') +
+  const href = safeUrl(o.url), host = hostOf(o.url);
+  const title = esc(o.title || host || "Untitled");
+  return '<div class="kb" data-id="' + esc(o.id) + '">' +
+    '<div class="t">' + (href ? '<a href="' + esc(href) + '" target="_blank" rel="noopener noreferrer">' + title + '</a>' : title) + '</div>' +
+    (host ? '<div class="host">' + esc(host) + '</div>' : '') +
+    (o.note ? '<div class="note">' + esc(o.note) + '</div>' : '') +
     '<div class="row">' +
-      '<span class="badge ' + (o.paid ? "paid" : "unpaid") + '" data-act="paid">' + (o.paid ? "Paid" : "Unpaid") + '</span>' +
-      '<span class="badge age' + (stale ? " old" : "") + '">' + age + 'd</span>' +
+      tagsOf(o).map(t => '<span class="tag" data-act="tag" data-tag="' + esc(t) + '">' + esc(t) + '</span>').join('') +
       '<span class="mv">' +
-        (o.stage !== "ordered" ? '<button data-act="back" title="Move back">&#8592;</button>' : '') +
         '<button data-act="edit" title="Edit">&#9998;</button>' +
         '<button class="del" data-act="del" title="Delete">&#10005;</button>' +
-        (o.stage !== "shipped" ? '<button data-act="fwd" title="Move forward">&#8594;</button>' : '') +
       '</span>' +
     '</div></div>';
 }
 function editCard(o){
-  return '<div class="ord" data-id="' + o.id + '"><div class="eform">' +
-    '<input class="e-cust" value="' + esc(o.cust) + '" placeholder="Customer">' +
-    '<input class="e-item" value="' + esc(o.item) + '" placeholder="Item">' +
-    '<input class="e-contact" value="' + esc(o.contact) + '" placeholder="Email or phone">' +
-    '<textarea class="e-notes" rows="2" placeholder="Notes">' + esc(o.notes) + '</textarea>' +
+  return '<div class="kb" data-id="' + esc(o.id) + '"><div class="eform">' +
+    '<input class="e-title" value="' + esc(o.title) + '" placeholder="Title">' +
+    '<input class="e-url" value="' + esc(o.url) + '" placeholder="https://">' +
+    '<input class="e-tags" value="' + esc(tagsOf(o).join(", ")) + '" placeholder="Tags, comma separated">' +
+    '<textarea class="e-note" placeholder="Why this is useful, and the bits worth remembering">' + esc(o.note) + '</textarea>' +
     '<div class="btns"><button class="save" data-act="save">Save</button>' +
-    '<button class="cancel" data-act="cancel">Cancel</button></div></div></div>';
+    '<button class="cancel" data-act="cancel">Cancel</button></div>' +
+    '</div></div>';
 }
+
+function matches(o){
+  if (filterTag && !tagsOf(o).includes(filterTag)) return false;
+  if (!query) return true;
+  const hay = [o.title, o.note, o.url, tagsOf(o).join(" ")].join(" ").toLowerCase();
+  return query.split(/\s+/).every(w => hay.includes(w));
+}
+
 function render(){
-  STAGES.forEach(st => {
-    const list = store.items.filter(o => o.stage === st)
-      .sort((a,b) => (a.created||"").localeCompare(b.created||""));
-    document.getElementById("c-" + st).textContent = "(" + list.length + ")";
-    document.getElementById("l-" + st).innerHTML = list.length
-      ? list.map(o => o.id === editing ? editCard(o) : card(o)).join("")
-      : '<div class="empty">Nothing here.</div>';
-  });
-  const active = store.items.filter(o => o.stage !== "shipped");
-  document.getElementById("s-open").textContent = active.length;
-  document.getElementById("s-unpaid").textContent = store.items.filter(o => !o.paid && o.stage !== "shipped").length;
-  document.getElementById("s-wait").textContent = active.length ? Math.max.apply(null, active.map(ageDays)) : 0;
-  document.getElementById("s-ship").textContent = store.items.filter(o => o.stage === "shipped").length;
+  const grid = document.getElementById("grid");
+  const all = store.items.slice().sort((a, b) =>
+    (b.updatedAt || b.created || "").localeCompare(a.updatedAt || a.created || ""));
+  const shown = all.filter(matches);
+
+  const tagSet = new Set();
+  all.forEach(o => tagsOf(o).forEach(t => tagSet.add(t)));
+  const tags = Array.from(tagSet).sort();
+
+  document.getElementById("s-total").textContent = all.length;
+  document.getElementById("s-tags").textContent = tags.length;
+  document.getElementById("s-shown").textContent = shown.length;
+
+  document.getElementById("chips").innerHTML =
+    (tags.length ? '<button class="chip' + (filterTag ? '' : ' on') + '" data-tag="">All</button>' : '') +
+    tags.map(t => '<button class="chip' + (filterTag === t ? ' on' : '') + '" data-tag="' + esc(t) + '">' + esc(t) + '</button>').join('');
+
+  grid.innerHTML = shown.length
+    ? shown.map(o => (editing === o.id ? editCard(o) : card(o))).join('')
+    : '<div class="empty">' + (all.length ? 'Nothing matches that.' : 'Nothing saved yet. Add your first reference above.') + '</div>';
 }
-document.addEventListener("click", e => {
+
+document.getElementById("chips").addEventListener("click", e => {
+  const c = e.target.closest(".chip"); if (!c) return;
+  filterTag = c.getAttribute("data-tag") || ""; render();
+});
+document.getElementById("q").addEventListener("input", e => {
+  query = e.target.value.trim().toLowerCase(); render();
+});
+
+document.getElementById("grid").addEventListener("click", e => {
   const btn = e.target.closest("[data-act]"); if (!btn) return;
-  const el = e.target.closest(".ord"); if (!el) return;
-  const o = store.items.find(x => x.id === el.dataset.id); if (!o) return;
-  const act = btn.dataset.act;
+  const act = btn.getAttribute("data-act");
+  if (act === "tag") { filterTag = btn.getAttribute("data-tag") || ""; render(); return; }
+  const el = e.target.closest(".kb"); if (!el) return;
+  const o = store.items.find(x => x.id === el.getAttribute("data-id")); if (!o) return;
   const stamp = () => { o.updatedAt = new Date().toISOString(); };
-  if (act === "paid") { o.paid = !o.paid; stamp(); save(); render(); }
-  else if (act === "fwd") { o.stage = STAGES[Math.min(2, STAGES.indexOf(o.stage) + 1)];
-    if (o.stage === "shipped") o.shippedAt = new Date().toISOString(); stamp(); save(); render(); }
-  else if (act === "back") { o.stage = STAGES[Math.max(0, STAGES.indexOf(o.stage) - 1)]; stamp(); save(); render(); }
-  else if (act === "edit") { editing = o.id; render(); }
+  if (act === "edit") { editing = o.id; render(); }
   else if (act === "cancel") { editing = null; render(); }
-  else if (act === "del") { if (confirm("Delete this order?\n\n" + o.cust + " — " + o.item)) {
+  else if (act === "del") {
+    if (confirm("Delete this reference?\n\n" + (o.title || o.url))) {
       store.items = store.items.filter(x => x.id !== o.id);
       store.deleted = store.deleted || {}; store.deleted[o.id] = new Date().toISOString();
-      save(); render(); } }
+      editing = null; save(); render();
+    }
+  }
   else if (act === "save") {
-    o.cust = el.querySelector(".e-cust").value.trim() || o.cust;
-    o.item = el.querySelector(".e-item").value.trim();
-    o.contact = el.querySelector(".e-contact").value.trim();
-    o.notes = el.querySelector(".e-notes").value.trim();
+    o.title = el.querySelector(".e-title").value.trim() || o.title;
+    o.url   = el.querySelector(".e-url").value.trim();
+    o.tags  = cleanTags(el.querySelector(".e-tags").value);
+    o.note  = el.querySelector(".e-note").value.trim();
     stamp(); editing = null; save(); render();
   }
 });
-function addOrder(){
-  const c = document.getElementById("a-cust"), i = document.getElementById("a-item"), q = document.getElementById("a-qty");
-  if (!c.value.trim()) { c.focus(); return; }
-  store.items.push({ id: "o" + Math.random().toString(36).slice(2,9), cust: c.value.trim(),
-    item: i.value.trim() || "Order", contact: "", qty: parseInt(q.value,10) || 1, price: null,
-    paid: false, stage: "ordered", notes: "", created: todayStr, updatedAt: new Date().toISOString() });
-  c.value = ""; i.value = ""; q.value = 1; save(); render();
+
+function addEntry(){
+  const t = document.getElementById("a-title"), u = document.getElementById("a-url"),
+        g = document.getElementById("a-tag");
+  const url = u.value.trim();
+  if (!t.value.trim() && !url) { t.focus(); return; }
+  store.items.push({
+    id: "k" + Math.random().toString(36).slice(2,9),
+    title: t.value.trim() || hostOf(url) || "Untitled",
+    url: url, tags: cleanTags(g.value), note: "",
+    created: todayStr, updatedAt: new Date().toISOString()
+  });
+  t.value = ""; u.value = ""; g.value = "";
+  filterTag = ""; query = ""; document.getElementById("q").value = "";
+  save(); render();
 }
-document.getElementById("a-btn").addEventListener("click", addOrder);
-["a-cust","a-item"].forEach(id => document.getElementById(id)
-  .addEventListener("keydown", e => { if (e.key === "Enter") addOrder(); }));
-window.addEventListener("storage", e => { if (e.key === OKEY) { store = loadLocal(); render(); } });
+document.getElementById("a-btn").addEventListener("click", addEntry);
+["a-title","a-url","a-tag"].forEach(id => document.getElementById(id)
+  .addEventListener("keydown", e => { if (e.key === "Enter") addEntry(); }));
+window.addEventListener("storage", e => { if (e.key === KKEY) { store = loadLocal(); render(); } });
 
 wireLogin(); render(); initSync();
 
